@@ -9,7 +9,7 @@ from app.config import bot
 from pathlib import Path
 
 current_file = Path(__file__).resolve()
-project_root = current_file.parent.parent
+project_root = current_file.parent.parent.parent.parent.parent
 db_path = project_root / 'fccp_bot' / 'bot_1' / 'all_data.json'
 
 async def check_db_and_send_notification():
