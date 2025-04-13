@@ -6,6 +6,11 @@ from app.db.dao import UserDAO
 from app.db.database import async_session_maker
 from app.db.schemas import UserFilterModel,TelegramIDModel
 from app.config import bot
+from pathlib import Path
+
+current_file = Path(__file__).resolve()
+project_root = current_file.parent.parent
+db_path = project_root / 'fccp_bot' / 'bot_1' / 'all_data.json'
 
 async def check_db_and_send_notification():
     """
@@ -14,7 +19,7 @@ async def check_db_and_send_notification():
     logger.info("Запуск задачи сравнения записей из базы данных и JSON.")
     
     # Загружаем данные из JSON
-    with open('all_data.json', 'r', encoding='utf-8') as file:
+    with open(db_path, 'r', encoding='utf-8') as file:
         json_data = json.load(file)
     async with async_session_maker() as session:
         # Получаем все записи из базы данных
@@ -57,7 +62,7 @@ async def check_user_and_send_notification(telegram_id: int):
     logger.info(f"Запуск задачи проверки для пользователя с telegram_id: {telegram_id}")
     
     # Загружаем данные из JSON
-    with open('all_data.json', 'r', encoding='utf-8') as file:
+    with open(db_path, 'r', encoding='utf-8') as file:
         json_data = json.load(file)
     
     async with async_session_maker() as session:
