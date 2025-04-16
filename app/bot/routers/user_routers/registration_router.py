@@ -31,22 +31,22 @@ async def start_req(callback: CallbackQuery,state:FSMContext):
 @registration_router.message(F.text.regexp(r"^\s*\S+(\s+\S+){2}\s*$"),StateFilter(Registration.fio))
 async def process_fio(message:Message,state:FSMContext):
     await state.update_data({'fio':message.text})
-    await message.answer('Приятно познакомиться! Теперь можете написать дату рождения в формате год-месяц-день')
+    await message.answer('Приятно познакомиться! Теперь можете написать дату рождения в формате дд.мм.гггг(пример: 29.03.1992)')
     await state.set_state(Registration.date_of_brth)
 
 @registration_router.message(~F.text.regexp(r"^\s*\S+(\s+\S+){2}\s*$"),StateFilter(Registration.fio))
 async def error_fio(message:Message):
     await message.answer('Это не похоже на ФИО, попробуйте еще раз')
 
-@registration_router.message(F.text.regexp(r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$"),StateFilter(Registration.date_of_brth))
+@registration_router.message(F.text.regexp(r"^(0[1-9]|[12]\d|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$"),StateFilter(Registration.date_of_brth))
 async def process_dot(message:Message,state:FSMContext):
     await state.update_data({'dot':message.text})
-    await message.answer('Теперь пожалуйста, введите город в котором вы проживаете')
+    await message.answer('Теперь пожалуйста, введите регион проживания полностью (например: Удмуртская Республика, Волгоградская область)')
     await state.set_state(Registration.region)
 
-@registration_router.message(~F.text.regexp(r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$"),StateFilter(Registration.date_of_brth))
+@registration_router.message(~F.text.regexp(r"^(0[1-9]|[12]\d|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$"),StateFilter(Registration.date_of_brth))
 async def error_dot(message:Message,state:FSMContext):
-    await message.answer('Неверный формат ввода(подсказка: тире важны)')
+    await message.answer('Неверный формат ввода')
 
 @registration_router.message(F.text, StateFilter(Registration.region))
 async def process_region(message:Message,state:FSMContext):

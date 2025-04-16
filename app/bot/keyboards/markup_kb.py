@@ -4,6 +4,26 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from loguru import logger
 
 
+class BackKeyboard:
+    __button_text = "Назад"
+    
+    @staticmethod
+    def get_button_text() -> str:
+        """
+        Возвращает текст кнопки 'Назад'.
+        """
+        return BackKeyboard.__button_text
+
+    @staticmethod
+    def build_back_kb() -> ReplyKeyboardMarkup:
+        """
+        Создает клавиатуру с кнопкой 'Назад'.
+        """
+        kb = ReplyKeyboardBuilder()
+        kb.button(text=BackKeyboard.__button_text)
+        kb.adjust(1)  # Одна кнопка в строке
+        return kb.as_markup()
+
 
 class MainKeyboard:
     __user_kb_texts_dict_ru = {

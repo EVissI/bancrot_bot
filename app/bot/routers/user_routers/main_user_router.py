@@ -27,5 +27,5 @@ async def process_referal(message:Message,state:FSMContext):
 
 @main_user_router.message(F.text, StateFilter(Referal.phone))
 async def process_referal(message:Message,state:FSMContext):
-    await message.answer('Спасибо за то что поделились нашим сервисом.\nЕсли человек, которого вы пригласили, оформит у нас банкротство, вы получите 10 тыс рублей ')
+    await message.answer('Спасибо за то что поделились контактом нашим сервисом.\nЕсли человек, которого вы пригласили, оформит у нас банкротство, вы получите 10 тыс рублей ')
     await state.clear()

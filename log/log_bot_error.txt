@@ -78,3 +78,4 @@ reply_markup.ForceReply
 (Background on this error at: https://sqlalche.me/e/20/gkpj)
 2025-04-13 at 17:02:19 | ERROR | Бот остановлен!
 2025-04-13 at 17:03:01 | ERROR | Бот остановлен!
+2025-04-16 at 16:18:45 | ERROR | Бот остановлен!

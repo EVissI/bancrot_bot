@@ -57,7 +57,7 @@ async def process_stop(query:CallbackQuery):
                     ]
                 }
             }
-        response = requests.post(f"{settings.BITRIKS_WEBHOOK_URL}crm.lead.list",json=lead_data)
+        response = requests.post(f"{settings.BITRIKS_WEBHOOK_URL}crm.lead.add",json=lead_data)
         result = response.json()
 
         if 'result' in result:

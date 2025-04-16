@@ -22,8 +22,12 @@ def im_ready() -> InlineKeyboardMarkup:
 def get_subscription_keyboard() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(
+        text="Ввести промокод",callback_data="promo_code",
+    )
+    kb.button(
         text="Оплатить",callback_data="payment_sub",
     )
+    kb.adjust(2)
     return kb.as_markup()
 
 def stop() -> InlineKeyboardMarkup:

@@ -6,6 +6,7 @@ from app.db.dao import UserDAO
 from app.db.database import async_session_maker
 from app.db.schemas import UserFilterModel,TelegramIDModel
 from app.config import bot
+from app.bot.common.msg import messages
 from pathlib import Path
 
 current_file = Path(__file__).resolve()
@@ -37,7 +38,7 @@ async def check_db_and_send_notification():
                 if json_entry:
                     json_entrys.append(json_entry)
                     break
-
+            flag = True
             for json_entry in json_entrys:
                 logger.info(f"Найдена запись в JSON для ключа: {key}")
                 
@@ -46,12 +47,17 @@ async def check_db_and_send_notification():
                     if json_sum_to_pay > 0:
                         await bot.send_message(db_record.telegram_id,text='Обнаружено исполнительное производство! Нажмите кнопку',
                                                reply_markup=stop())
-
+                        await bot.send_message(db_record.telegram_id,text=messages.get('referal'))
+                        flag = False
                     else:
                         logger.info("Сумма к оплате равна 0. Логика не выполняется.")
                 except IndexError:
                     logger.error(f"Ошибка доступа к элементу массива для ключа: {key}")
                     continue
+            if flag:
+                logger.info(f"Запись для ключа {key} не найдена в JSON.")
+                await bot.send_message(db_record.telegram_id,text='Исполнительные производства не найдены')
+                await bot.send_message(db_record.telegram_id,text=messages.get('referal'))
             else:
                 logger.info(f"Запись для ключа {key} не найдена в JSON.")
 
