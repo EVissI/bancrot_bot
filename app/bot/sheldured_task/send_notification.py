@@ -78,8 +78,7 @@ async def check_user_and_send_notification(telegram_id: int):
         if not db_record:
             logger.info(f"Пользователь с telegram_id {telegram_id} не найден в базе данных.")
             return
-        formatted_date = datetime.strptime(db_record.data_of_birth, "%Y-%m-%d").strftime("%d.%m.%Y")
-        key = f"{db_record.user_enter_last_name} {db_record.user_enter_first_name} {db_record.user_enter_otchestvo or ''}_{formatted_date}".strip()
+        key = f"{db_record.user_enter_last_name} {db_record.user_enter_first_name} {db_record.user_enter_otchestvo or ''}_{db_record.data_of_birth}".strip()
         logger.info(key)
         json_entrys = []
         for json_data_arr in json_data:
