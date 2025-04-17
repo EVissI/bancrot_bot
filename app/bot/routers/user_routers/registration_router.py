@@ -9,7 +9,7 @@ from loguru import logger
 from app.bot.keyboards.inline_kb import get_subscription_keyboard
 from app.db.database import async_session_maker
 from app.db.dao import UserDAO
-from app.db.schemas import UserModel
+from app.db.schemas import TelegramIDModel, UserModel
 
 
 registration_router = Router()
@@ -63,6 +63,7 @@ async def process_old_last_name(message:Message,state:FSMContext):
             await state.update_data({'old_last_name':message.text})
         state_data = await state.get_data()
         async with async_session_maker() as session:
+            telegram_user = await UserDAO.find_one_or_none(session,TelegramIDModel(telegram_id=message.from_user.id))
             fio:str = state_data.get('fio')
             last_name, first_name, otchestvo = fio.split(' ')
             user = UserModel(
@@ -78,7 +79,10 @@ async def process_old_last_name(message:Message,state:FSMContext):
                 old_last_name=state_data.get('old_last_name'),
                 end_sub_time=None
             )
-            await UserDAO.add(session=session,values=user)
+            if telegram_user:
+                await UserDAO.update(session,filters=TelegramIDModel(telegram_id=message.from_user.id),values=UserModel.model_validate(user.to_dict()))
+            else:
+                await UserDAO.add(session=session,values=user)
         await message.answer('Отлично,теперь оплатите подписку для дальнейшего пользования ботом',reply_markup=get_subscription_keyboard())
     except Exception as e:
         logger.error(f'При добавлении юзера произошла ошибка - {str(e)}')
