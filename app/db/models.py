@@ -28,3 +28,4 @@ class TelegramUser(Base):
     region: Mapped[Optional[str]] = mapped_column(String, default=None)
     old_last_name: Mapped[Optional[str]] = mapped_column(String, default=None)
     end_sub_time:Mapped[Optional[datetime]] = mapped_column(DateTime, default=None)
+    activate_free_sub: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)

@@ -65,9 +65,15 @@ class EnterPromo(StatesGroup):
 async def process_invoice(
     callback: CallbackQuery, state:FSMContext
 ):
-    await callback.message.delete()
-    await callback.message.answer('Введите промокод, который вы хотите активировать',reply_markup=BackKeyboard.build_back_kb())
-    await state.set_state(EnterPromo.promo)
+    async with async_session_maker() as session:
+        telegram_user = await UserDAO.find_one_or_none(session, TelegramIDModel(telegram_id=callback.from_user.id))
+    if telegram_user:
+        if telegram_user.activate_free_sub:
+            await callback.answer('Вы уже активировали промокод')
+            return
+        await callback.message.delete()
+        await callback.message.answer('Введите промокод, который вы хотите активировать',reply_markup=BackKeyboard.build_back_kb())
+        await state.set_state(EnterPromo.promo)
 
 @payment_router.message(F.text, StateFilter(EnterPromo.promo))
 async def process_promo_code(
@@ -86,6 +92,7 @@ async def process_promo_code(
                 telegram_user.end_sub_time += timedelta(days=30*6)
             else:
                 telegram_user.end_sub_time = datetime.utcnow() + timedelta(days=30*6)
+            telegram_user.activate_free_sub = True
         await UserDAO.update(session,filters=TelegramIDModel(telegram_id=message.from_user.id),values=UserFilterModel.model_validate(telegram_user.to_dict()))
     msg = f"Промокод {promo_code} успешно активирован на 6 месяцев!\n" + messages.get('after_sub')
     await message.reply(
