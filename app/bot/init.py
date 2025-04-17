@@ -47,7 +47,7 @@ def start_scheduler():
     Запуск планировщика задач.
     """
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(check_db_and_send_notification, "interval", days=3.5)
+    scheduler.add_job(check_db_and_send_notification, "cron", day_of_week="mon", hour=0, minute=0)
     scheduler.start()
     logger.info("Планировщик задач запущен.")
 

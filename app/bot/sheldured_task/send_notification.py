@@ -28,7 +28,6 @@ async def check_db_and_send_notification():
         json_entrys = []
         for db_record in db_records:
             # Формируем ключ для поиска в JSON
-            db_record.data_of_birth = db_record.data_of_birth.replace("-", ".")
             key = f"{db_record.user_enter_last_name} {db_record.user_enter_first_name} {db_record.user_enter_otchestvo or ''}_{db_record.data_of_birth}".strip()
 
             
