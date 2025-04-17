@@ -1,4 +1,4 @@
-﻿from pyexpat.errors import messages
+﻿from app.bot.common.msg import messages
 from aiogram import Router,F
 from aiogram.filters import CommandStart
 from aiogram.types import Message,CallbackQuery
@@ -20,7 +20,7 @@ main_router.include_router(main_user_router)
 
 @main_router.message(CommandStart())
 async def cmd_start(message: Message):
-    await message.answer(text=messages.get('start'))
+    await message.answer(messages.get('start'))
     chat_member = await message.bot.get_chat_member(settings.CHAT_TO_SUB, message.from_user.id)
     if chat_member.status == 'left':
         await message.answer("Пожалуйста, подпишитесь на наш канал, чтобы продолжить.", reply_markup=get_subscription_on_chanel_keyboard())
