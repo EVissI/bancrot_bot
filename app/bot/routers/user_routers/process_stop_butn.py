@@ -1,4 +1,5 @@
-﻿from aiogram import Router,F
+﻿from datetime import datetime, timedelta
+from aiogram import Router,F
 from aiogram.types import CallbackQuery
 from loguru import logger
 import requests
@@ -30,34 +31,22 @@ async def process_stop(query:CallbackQuery):
             telegram_link = f"tg://user?id={user_from_db.telegram_id}"
         old_last_name = f"Предыдущее фамилия: {user['old_last_name']}" if user.get('old_last_name') else ''
         comment_msg = f'Ссылка на тг: {telegram_link}' + old_last_name
-        lead_data = {
-                'fields': {
-                    'TITLE': f"Лид от пользователя {user['first_name']} {user['last_name']}",
-                    'NAME': user['first_name'],
-                    'LAST_NAME': user['last_name'],
-                    'SECOND_NAME': user.get('user_enter_fio', '').split()[1] if user.get('user_enter_fio') else '',
-                    'BIRTHDATE': user['data_of_birth'],
-                    'ADDRESS_CITY': user['region'],
-                    'COMMENTS': comment_msg,
-                    'SOURCE_ID': 'WEB',  
-                    'STATUS_ID': 'NEW',
-                    'OPENED': 'Y',
-                    'ASSIGNED_BY_ID': 1, 
-                    'PHONE': [
-                        {
-                            'VALUE': '1234567890',
-                            'VALUE_TYPE': 'WORK'
-                        }
-                    ],
-                    'EMAIL': [
-                        {
-                            'VALUE': 'user@example.com',
-                            'VALUE_TYPE': 'WORK'
-                        }
-                    ]
-                }
+        fio = user['user_enter_fio'] if user['user_enter_fio'] else f"{user['first_name']} {user['last_name']}"
+        deal_data = {
+            'fields': {
+                'TITLE': f'Постабанкроство {fio}',  
+                'TYPE_ID': 'SALE',  
+                'STAGE_ID': 'NEW',  
+                'CATEGORY_ID': '7',  
+                'BEGINDATE': datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),  
+                'CLOSEDATE': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%S%z'),  # Дата завершения
+                'COMMENTS': comment_msg,  
+                'OPENED': 'Y',  
+                'SOURCE_ID': 'WEB',  
             }
-        response = requests.post(f"{settings.BITRIKS_WEBHOOK_URL}crm.lead.add",json=lead_data)
+        }
+
+        response = requests.post(f"{settings.BITRIKS_WEBHOOK_URL}crm.deal.add",json=deal_data)
         result = response.json()
 
         if 'result' in result:
