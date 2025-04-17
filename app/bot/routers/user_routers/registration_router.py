@@ -80,7 +80,7 @@ async def process_old_last_name(message:Message,state:FSMContext):
                 end_sub_time=None
             )
             if telegram_user:
-                await UserDAO.update(session,filters=TelegramIDModel(telegram_id=message.from_user.id),values=UserModel.model_validate(user.to_dict()))
+                await UserDAO.update(session,filters=TelegramIDModel(telegram_id=message.from_user.id),values=user)
             else:
                 await UserDAO.add(session=session,values=user)
         await message.answer('Отлично,теперь оплатите подписку для дальнейшего пользования ботом',reply_markup=get_subscription_keyboard())
