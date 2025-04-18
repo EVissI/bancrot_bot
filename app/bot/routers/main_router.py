@@ -54,7 +54,7 @@ async def check_sub(message:Message):
 
 @main_router.callback_query(F.data.startswith("check_subscription"))
 async def check_sub(callback: CallbackQuery):
-    chat_member = await callback.message.bot.get_chat_member(settings.CHAT_TO_SUB, callback.message.from_user.id)
+    chat_member = await callback.bot.get_chat_member(settings.CHAT_TO_SUB, callback.from_user.id)
     logger.info(chat_member.status)
     if chat_member.status == 'left':
         await callback.message.answer('Упс, кто-то хитрит! Нужно подписаться на канал')
