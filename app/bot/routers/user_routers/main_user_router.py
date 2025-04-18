@@ -13,6 +13,7 @@ from app.bot.keyboards.markup_kb import MainKeyboard
 main_user_router = Router()
 
 class Referal(StatesGroup):
+    title = State()
     phone = State()
 
 
@@ -22,6 +23,12 @@ async def process_check_isp(message:Message):
 
 @main_user_router.message(F.text == MainKeyboard.get_user_kb_texts().get('referal'))
 async def process_referal(message:Message,state:FSMContext):
+    await message.answer('Введите ваше ФИО и номер телефона, для дальнейшей связи с вами')
+    await state.set_state(Referal.title)
+
+@main_user_router.message(F.text, StateFilter(Referal.title))
+async def process_referal_title(message:Message,state:FSMContext):
+    await state.update_data({'title':message.text})
     await message.answer('Введите номер телефона человека, которому нужна помощь в банкротстве')
     await state.set_state(Referal.phone)
 
