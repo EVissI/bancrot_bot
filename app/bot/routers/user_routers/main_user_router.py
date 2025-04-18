@@ -22,10 +22,10 @@ async def process_check_isp(message:Message):
 
 @main_user_router.message(F.text == MainKeyboard.get_user_kb_texts().get('referal'))
 async def process_referal(message:Message,state:FSMContext):
-    await message.answer('Введите номер телефона человека, которого вы пригласили')
+    await message.answer('Введите номер телефона человека, которому нужна помощь в банкротстве')
     await state.set_state(Referal.phone)
 
 @main_user_router.message(F.text, StateFilter(Referal.phone))
 async def process_referal(message:Message,state:FSMContext):
-    await message.answer('Спасибо за то что поделились контактом нашим сервисом.\nЕсли человек, которого вы пригласили, оформит у нас банкротство, вы получите 10 тыс рублей ')
+    await message.answer('Спасибо за то что не остались в стороне и решили помочь своему близкому. Если человек, которому вы решили помочь, оформит у нас банкротство, вы получите 10 000 рублей.')
     await state.clear()
