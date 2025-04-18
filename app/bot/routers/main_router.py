@@ -43,7 +43,7 @@ async def cmd_start(message: Message):
         if user_from_db:
             await message.answer(f'Привет, {user_from_db.user_enter_first_name}!', reply_markup=MainKeyboard.build_main_kb())
             return
-    chat_member = await message.bot.get_chat_member(settings.CHAT_TO_SUB, message.from_user.id)
+    chat_member = await message.bot.get_chat_member(chat_id=settings.CHAT_TO_SUB, user_id=message.from_user.id)
     if chat_member.status == 'left':
         await message.answer("Пожалуйста, подпишитесь на наш канал, чтобы продолжить.", reply_markup=get_subscription_on_chanel_keyboard())
         return
