@@ -48,7 +48,7 @@ async def cmd_start(message: Message):
         await message.answer("Пожалуйста, подпишитесь на наш канал, чтобы продолжить.", reply_markup=get_subscription_on_chanel_keyboard())
         return
 
-@main_router.callback_query(F.text == 'test_sub')
+@main_router.message(F.text == '/test_sub')
 async def check_sub(message:Message):
     await message.answer('Пожалуйста, подпишитесь на наш канал, чтобы продолжить.', reply_markup=get_subscription_on_chanel_keyboard())
 
