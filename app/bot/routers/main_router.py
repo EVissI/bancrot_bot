@@ -47,7 +47,10 @@ async def cmd_start(message: Message):
     if chat_member.status == 'left':
         await message.answer("Пожалуйста, подпишитесь на наш канал, чтобы продолжить.", reply_markup=get_subscription_on_chanel_keyboard())
         return
-    await message.answer('Отлично! Я вижу ты подписан на наш канал, пройди акнкетирование, чтобы пользоваться ботом',reply_markup=im_ready())
+
+@main_router.callback_query(F.text == '/test_sub')
+async def check_sub(message:Message):
+    await message.answer('Пожалуйста, подпишитесь на наш канал, чтобы продолжить.', reply_markup=get_subscription_on_chanel_keyboard())
 
 @main_router.callback_query(F.data.startswith("check_subscription"))
 async def check_sub(callback: CallbackQuery):
