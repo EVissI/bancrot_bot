@@ -57,7 +57,7 @@ async def check_sub(callback: CallbackQuery):
     chat_member = await callback.bot.get_chat_member(settings.CHAT_TO_SUB, callback.from_user.id)
     logger.info(chat_member.status)
     if chat_member.status == 'left':
-        await callback.message.answer('Упс, кто-то хитрит! Нужно подписаться на канал')
+        await callback.answer('Упс, кто-то хитрит! Нужно подписаться на канал')
         return
     await callback.message.delete()
     await callback.message.answer('Отлично! Для того чтобы пользоваться ботом, нужно пройти маленькое анкетирование',reply_markup=im_ready())
