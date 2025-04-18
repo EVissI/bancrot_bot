@@ -25,7 +25,7 @@ class CheckPaidSubscription(BaseMiddleware):
                 async with async_session_maker() as session:
                     user.end_sub_time = None
                     await UserDAO.update(session, filters=TelegramIDModel(telegram_id=event.from_user.id), values=UserFilterModel.model_validate(user.to_dict()))
-                    await event.answer("Ваша подписка истекла. Пожалуйста, продлите её, чтобы продолжить пользоваться ботом.")
+                    await event.answer("Ваша подписка истекла. Пожалуйста, продлите её, чтобы продолжить пользоваться ботом.",reply_markup=get_subscription_keyboard())
                     return  
             return await handler(event, data)
         
