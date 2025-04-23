@@ -57,7 +57,6 @@ async def process_succesful_payment(message:Message):
                 title=f"{fio}_ТГБОТ",
                 comment=f"Оплата подписки: {message.successful_payment.total_amount // 100} {message.successful_payment.currency}",
                 category_id='7',  
-                deal_type='SALE',
                 stage_id='C7:UC_CYWJJ2'  # Оплата подписки
             )
         if not success:
@@ -105,13 +104,12 @@ async def process_promo_code(
             else:
                 telegram_user.end_sub_time = datetime.utcnow() + timedelta(days=30*6)
             telegram_user.activate_free_sub = True
-            
+
         fio = f"{telegram_user.user_enter_last_name} {telegram_user.user_enter_first_name} {telegram_user.user_enter_otchestvo or ''}"
         success, result = await create_bitrix_deal(
             title=f"{fio}_ТГБОТ",
             comment=f"Активация по промокоду: {promo_code}",
             category_id='7',  # Постбанкротство
-            deal_type='SALE',
             stage_id='C7:NEW'  
         )
         if not success:

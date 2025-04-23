@@ -54,7 +54,6 @@ async def process_referal(message:Message,state:FSMContext):
                 title=deal_title,
                 comment=f"Рекомендация от: {referrer_info}",
                 category_id='0',  
-                deal_type='SALE',
                 stage_id='C0:NEW'
             )
             
