@@ -1,30 +1,32 @@
 ﻿import requests
 from datetime import datetime, timedelta
+from pprint import pprint, pformat
 
-# Пример данных для сделки
-deal_data = {
-    'fields': {
-        'TITLE': 'Сделка с клиентом Иван Иванов',  # Название сделки
-        'TYPE_ID': 'SALE',  # Тип сделки
-        'STAGE_ID': 'NEW',  # Этап сделки
-        'CATEGORY_ID': '7',  # Категория сделки
-        'BEGINDATE': datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),  # Дата начала
-        'CLOSEDATE': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%S%z'),  # Дата завершения
-        'COMMENTS': 'Комментарий к сделке',  # Комментарий
-        'OPENED': 'Y',  # Сделка открыта для всех
-        'SOURCE_ID': 'WEB',  # Источник сделки
-    }
-}
+# Создаем имя файла с текущей датой
+filename = f"bitrix_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
 
-# URL вебхука для доступа к Битрикс24
-BITRIX_WEBHOOK_URL = f"https://k127bfl.bitrix24.ru/rest/1/fdwpfvjql4rilnow/crm.deal.add"
+# Открываем файл для записи
+with open(filename, 'w', encoding='utf-8') as f:
+    # URL вебхука для доступа к Битрикс24
+    BITRIX_WEBHOOK_URL = f"https://k127bfl.bitrix24.ru/rest/1/fdwpfvjql4rilnow/crm.category.list"
 
-# Отправка запроса
-response = requests.post(BITRIX_WEBHOOK_URL, json=deal_data)
+    # Отправка запроса для категорий
+    response = requests.post(BITRIX_WEBHOOK_URL, json={"entityTypeId":2})
+    result = response.json()
+    
+    f.write("=== Категории ===\n")
+    for record in result['result']['categories']:
+        f.write(f"{pformat(record)}\n")
+    f.write("\n")
 
-# Обработка ответа
-result = response.json()
-if 'result' in result:
-    print(f"Сделка успешно создана. ID сделки: {result['result']}")
-else:
-    print(f"Ошибка при создании сделки: {result}")
+    # URL вебхука для доступа к статусам
+    BITRIX_WEBHOOK_URL = f"https://k127bfl.bitrix24.ru/rest/1/fdwpfvjql4rilnow/crm.status.list"
+
+    # Отправка запроса для статусов
+    response = requests.post(BITRIX_WEBHOOK_URL, json={"ENTITY_ID": "STATUS"})
+    result = response.json()
+    
+    f.write("=== Статусы ===\n")
+    f.write(pformat(result))
+
+print(f"Результаты записаны в файл: {filename}")

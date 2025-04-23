@@ -4,59 +4,70 @@ from aiogram.types import CallbackQuery
 from loguru import logger
 import requests
 
+from app.bot.common.utils import create_bitrix_deal
+from app.bot.keyboards.inline_kb import StopBancrData
 from app.config import settings
 from app.db.dao import UserDAO
 from app.db.database import async_session_maker
 from app.db.schemas import TelegramIDModel
 stop_router = Router()
 
-@stop_router.callback_query(F.data.startswith("stop"))
-async def process_stop(query:CallbackQuery):
+@stop_router.callback_query(StopBancrData.filter())
+async def process_stop(query: CallbackQuery, callback_data:StopBancrData):
     try:
         async with async_session_maker() as session:
             user_from_db = await UserDAO.find_one_or_none(session,TelegramIDModel(telegram_id=query.from_user.id))
-        user = {
-        'telegram_id': user_from_db.telegram_id,
-        'username': user_from_db.username,
-        'first_name': user_from_db.user_enter_first_name,
-        'last_name': user_from_db.user_enter_last_name,
-        'user_enter_fio': f'{user_from_db.user_enter_last_name} {user_from_db.user_enter_first_name} {user_from_db.user_enter_otchestvo}',
-        'data_of_birth': user_from_db.data_of_birth,
-        'region': user_from_db.region,
-        'old_last_name': user_from_db.old_last_name
-        }
+       
         if user_from_db.username:
             telegram_link = f"https://t.me/{user_from_db.username}"
         else:
             telegram_link = f"tg://user?id={user_from_db.telegram_id}"
-        old_last_name = f"Предыдущее фамилия: {user['old_last_name']}" if user.get('old_last_name') else ''
-        comment_msg = f'Ссылка на тг: {telegram_link}' + old_last_name
-        fio = user['user_enter_fio'] if user['user_enter_fio'] else f"{user['first_name']} {user['last_name']}"
-        deal_data = {
-            'fields': {
-                'TITLE': f'Постабанкроство {fio}',  
-                'TYPE_ID': 'SALE',  
-                'STAGE_ID': 'NEW',  
-                'CATEGORY_ID': '7',  
-                'BEGINDATE': datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),  
-                'CLOSEDATE': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%S%z'),  # Дата завершения
-                'COMMENTS': comment_msg,  
-                'OPENED': 'Y',  
-                'SOURCE_ID': 'WEB',  
-            }
-        }
+        old_last_name = f"Предыдущее фамилия: {user_from_db.old_last_name}" if user_from_db.old_last_name else ''
+        IE = f"ИНН: {callback_data.IE}"
+        comment_msg = f'{IE}\nСсылка на тг: {telegram_link}\n{old_last_name}' 
+        if user_from_db.user_enter_otchestvo:
+            fio = f"{user_from_db.user_enter_last_name} {user_from_db.user_enter_first_name} {user_from_db.user_enter_otchestvo}"
+        else:
+            fio = f"{user_from_db.user_enter_last_name} {user_from_db.user_enter_first_name}"
 
-        response = requests.post(f"{settings.BITRIKS_WEBHOOK_URL}crm.deal.add",json=deal_data)
-        result = response.json()
-
-        if 'result' in result:
-            logger.info(f"Лид успешно создан с ID: {result['result']}")
+        success, result = await create_bitrix_deal(title=f'{fio}_ТГБОТ',comment=comment_msg,category_id='7',stage_id='C7:UC_CYWJJ2')
+        if success:
             await query.message.delete()
             await query.message.answer('Отлично, скоро с вами свяжется наш менеджер')
         else:
-            logger.info(f"Ошибка при создании лида: {result['error_description']}")
+            logger.error(f"Ошибка при создании сделки: {result}")
             await query.message.delete()
             await query.message.answer('Произошла ошибка на сервере, попробуйте позже')
+
+#         4) Название сделки: ФИО_ТГБОТ (когда нажимают кнопку )
+# Стадия: Оплата подписки 
+# Тип сделки: Постбанкротство
+# Комментарий: Номера ИП которые выдал бот в тг
+        # deal_data = {
+        #     'fields': {
+        #         'TITLE': f'Постабанкроство {fio}',  
+        #         'TYPE_ID': 'SALE',  
+        #         'STAGE_ID': 'NEW',  
+        #         'CATEGORY_ID': '7',  
+        #         'BEGINDATE': datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),  
+        #         'CLOSEDATE': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%S%z'),  # Дата завершения
+        #         'COMMENTS': comment_msg,  
+        #         'OPENED': 'Y',  
+        #         'SOURCE_ID': 'WEB',  
+        #     }
+        # }
+
+        # response = requests.post(f"{settings.BITRIKS_WEBHOOK_URL}crm.deal.add",json=deal_data)
+        # result = response.json()
+
+        # if 'result' in result:
+        #     logger.info(f"Лид успешно создан с ID: {result['result']}")
+        #     await query.message.delete()
+        #     await query.message.answer('Отлично, скоро с вами свяжется наш менеджер')
+        # else:
+        #     logger.info(f"Ошибка при создании лида: {result['error_description']}")
+        #     await query.message.delete()
+        #     await query.message.answer('Произошла ошибка на сервере, попробуйте позже')
 
     except Exception as e:
         logger.error(f'При отправке лида от юзера {query.from_user.id} произошла ошибка - {str(e)}')

@@ -42,14 +42,22 @@ async def check_db_and_send_notification():
                 logger.info(f"Найдена запись в JSON для ключа: {key}")
                 
                 try:
-                    json_sum_to_pay = int(json_entry[0][0][10].replace('Сумма к оплате: ', ''))
-                    if json_sum_to_pay > 0:
-                        await bot.send_message(db_record.telegram_id,text='Обнаружено исполнительное производство! Нажмите кнопку',
-                                               reply_markup=stop())
-                        await bot.send_message(db_record.telegram_id,text=messages.get('referal'))
-                        flag = False
-                    else:
-                        logger.info("Сумма к оплате равна 0. Логика не выполняется.")
+                    for i in json_entry:
+                        for j in i:
+                            try:
+                                json_sum_to_pay = int(j[10].replace('Сумма к оплате: ', ''))
+                                if json_sum_to_pay > 0:
+                                    await bot.send_message(db_record.telegram_id,text='Обнаружено исполнительное производство! Нажмите кнопку',
+                                                        reply_markup=stop(j[3]))
+                                    await bot.send_message(db_record.telegram_id,text=messages.get('referal'))
+                                    flag = False
+                                    break
+                                else:
+                                    logger.info("Сумма к оплате равна 0. Логика не выполняется.")
+                            except IndexError:
+                                pass
+                        if flag == False:
+                            break
                 except IndexError:
                     logger.error(f"Ошибка доступа к элементу массива для ключа: {key}")
                     continue
@@ -90,27 +98,21 @@ async def check_user_and_send_notification(telegram_id: int):
             logger.info(f"Найдена запись в JSON для ключа: {key}")
             
             try:
-                try:
-                    for json_1 in json_entry:
-                        for json_2 in json_1:
-                            json_sum_to_pay = int(json_2[10].replace('Сумма к оплате: ', ''))
-                            if json_sum_to_pay > 0:
-                                await bot.send_message(
-                                    db_record.telegram_id,
-                                    text='Обнаружено исполнительное производство! Нажмите кнопку',
-                                    reply_markup=stop()
-                                )
-                            return
-                    else:
-                        logger.info("Сумма к оплате равна 0. Логика не выполняется.")
-                except:
-                    pass
+                for json_1 in json_entry:
+                    for json_2 in json_1:
+                        json_sum_to_pay = int(json_2[10].replace('Сумма к оплате: ', ''))
+                        if json_sum_to_pay > 0:
+                            await bot.send_message(
+                                db_record.telegram_id,
+                                text='Обнаружено исполнительное производство! Нажмите кнопку',
+                                reply_markup=stop(json_2[3])
+                            )
+                        return
+                else:
+                    logger.info("Сумма к оплате равна 0. Логика не выполняется.")
             except IndexError:
-                logger.error(f"Ошибка доступа к элементу массива для ключа: {key}")
-            return
+                pass
         
-        # Если запись не найдена
-        logger.info(f"Запись для ключа {key} не найдена в JSON.")
         await bot.send_message(
                             db_record.telegram_id,
                             text='Исполнительные производства не найдены'

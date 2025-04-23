@@ -1,6 +1,8 @@
 ﻿from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+from aiogram.filters.callback_data import CallbackData
+
 def get_subscription_on_chanel_keyboard() -> InlineKeyboardMarkup:
     channel_url = 'https://t.me/asfgagagagagaag' 
     kb = InlineKeyboardBuilder()
@@ -30,9 +32,12 @@ def get_subscription_keyboard() -> InlineKeyboardMarkup:
     kb.adjust(2)
     return kb.as_markup()
 
-def stop() -> InlineKeyboardMarkup:
+class StopBancrData(CallbackData, prefix="change_lang"):
+    IE:str
+
+def stop(IE:str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(
-        text="Прекратить",callback_data="stop",
+        text="Прекратить",callback_data=StopBancrData(IE=IE).pack(),
     )
     return kb.as_markup()

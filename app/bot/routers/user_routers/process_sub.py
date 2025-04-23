@@ -8,6 +8,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 from loguru import logger
 
+from app.bot.common.utils import create_bitrix_deal
 from app.bot.keyboards.inline_kb import get_subscription_keyboard
 from app.db.database import async_session_maker
 from app.db.schemas import UserFilterModel,UserModel,TelegramIDModel
@@ -51,6 +52,17 @@ async def process_succesful_payment(message:Message):
                 telegram_user.end_sub_time += timedelta(days=30)
             else:
                 telegram_user.end_sub_time = datetime.utcnow() + timedelta(days=30)
+        fio = f"{telegram_user.user_enter_last_name} {telegram_user.user_enter_first_name} {telegram_user.user_enter_otchestvo or ''}"
+        success, result = await create_bitrix_deal(
+                title=f"{fio}_ТГБОТ",
+                comment=f"Оплата подписки: {message.successful_payment.total_amount // 100} {message.successful_payment.currency}",
+                category_id='7',  
+                deal_type='SALE',
+                stage_id='C7:UC_CYWJJ2'  # Оплата подписки
+            )
+        if not success:
+            logger.error(f"Failed to create Bitrix deal for payment: {result}")
+
         await UserDAO.update(session,filters=TelegramIDModel(telegram_id=user_id),values=UserFilterModel.model_validate(telegram_user.to_dict()))
     msg = f"Платеж на сумму {message.successful_payment.total_amount // 100} " f"{message.successful_payment.currency} прошел успешно!\n" + messages.get('after_sub')
     await message.reply(
@@ -93,6 +105,18 @@ async def process_promo_code(
             else:
                 telegram_user.end_sub_time = datetime.utcnow() + timedelta(days=30*6)
             telegram_user.activate_free_sub = True
+            
+        fio = f"{telegram_user.user_enter_last_name} {telegram_user.user_enter_first_name} {telegram_user.user_enter_otchestvo or ''}"
+        success, result = await create_bitrix_deal(
+            title=f"{fio}_ТГБОТ",
+            comment=f"Активация по промокоду: {promo_code}",
+            category_id='7',  # Постбанкротство
+            deal_type='SALE',
+            stage_id='C7:NEW'  
+        )
+        if not success:
+            logger.error(f"Failed to create Bitrix deal for promo activation: {result}")
+
         await UserDAO.update(session,filters=TelegramIDModel(telegram_id=message.from_user.id),values=UserFilterModel.model_validate(telegram_user.to_dict()))
     msg = f"Промокод {promo_code} успешно активирован на 6 месяцев!\n" + messages.get('after_sub')
     await message.reply(
