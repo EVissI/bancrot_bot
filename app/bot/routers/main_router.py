@@ -3,7 +3,7 @@ from aiogram import Router,F
 from aiogram.filters import CommandStart
 from aiogram.types import Message,CallbackQuery
 
-from app.bot.keyboards.inline_kb import get_subscription_on_chanel_keyboard, im_ready
+from app.bot.keyboards.inline_kb import get_subscription_on_chanel_keyboard, im_ready,get_subscription_keyboard
 from app.bot.keyboards.markup_kb import MainKeyboard
 from app.bot.midlewares.check_sub import CheckSub
 from app.bot.midlewares.check_sub_to_bot import CheckPaidSubscription
@@ -52,6 +52,10 @@ async def cmd_start(message: Message):
 async def check_sub(message:Message):
     await message.answer('Пожалуйста, подпишитесь на наш канал, чтобы продолжить.', reply_markup=get_subscription_on_chanel_keyboard())
 
+@main_router.message(F.text == '/test_payment')
+async def test_payment(message:Message):
+    await message.answer('TEST', reply_markup=get_subscription_keyboard())
+
 @main_router.callback_query(F.data.startswith("check_subscription"))
 async def check_sub(callback: CallbackQuery):
     chat_member = await callback.bot.get_chat_member(settings.CHAT_TO_SUB, callback.from_user.id)
@@ -60,4 +64,9 @@ async def check_sub(callback: CallbackQuery):
         await callback.answer('Упс, кто-то хитрит! Нужно подписаться на канал')
         return
     await callback.message.delete()
-    await callback.message.answer('Отлично! Для того чтобы пользоваться ботом, нужно пройти маленькое анкетирование',reply_markup=im_ready())
+    async with async_session_maker() as session:
+        telegram_user = await UserDAO.find_one_or_none(session, TelegramIDModel(telegram_id=callback.from_user.id))
+    if telegram_user:
+        await callback.message.answer('Отлично, можете пользоваться ботом', reply_markup=MainKeyboard.build_main_kb())
+    else:
+        await callback.message.answer('Отлично! Для того чтобы пользоваться ботом, нужно пройти маленькое анкетирование',reply_markup=im_ready())
