@@ -32,7 +32,7 @@ async def process_referal(message:Message,state:FSMContext):
 @main_user_router.message(F.text, StateFilter(Referal.title))
 async def process_referal_title(message:Message,state:FSMContext):
     await state.update_data({'title':message.text})
-    await message.answer('Введите номер телефона человека, которому нужна помощь в банкротстве')
+    await message.answer('Введите ФИО и номер телефона человека, которому нужна помощь в банкротстве')
     await state.set_state(Referal.phone)
 
 @main_user_router.message(F.text, StateFilter(Referal.phone))
@@ -49,10 +49,13 @@ async def process_referal(message:Message,state:FSMContext):
         
         if user:
             deal_title = f"{phone}_{user.user_enter_first_name}_БФЛ_ТГБОТ"
-            
+            if user.username:
+                telegram_link = f"https://t.me/{user.username}"
+            else:
+                telegram_link = f"tg://user?id={user.telegram_id}"
             success, result = await create_bitrix_deal(
                 title=deal_title,
-                comment=f"Рекомендация от: {referrer_info}",
+                comment=f"Рекомендация от: {referrer_info}\nТелеграмм рекомендующего:{telegram_link}",
                 category_id='0',  
                 stage_id='C0:NEW'
             )

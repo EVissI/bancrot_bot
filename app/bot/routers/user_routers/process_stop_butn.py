@@ -24,7 +24,10 @@ async def process_stop(query: CallbackQuery, callback_data:StopBancrData):
             telegram_link = f"tg://user?id={user_from_db.telegram_id}"
         old_last_name = f"Предыдущее фамилия: {user_from_db.old_last_name}" if user_from_db.old_last_name else ''
         IE = f"ИНН: {callback_data.IE}"
-        comment_msg = f'{IE}\nСсылка на тг: {telegram_link}\n{old_last_name}' 
+        region = f"Регион: {user_from_db.region}"
+        date_of_birth = f"Дата рождения: {user_from_db.data_of_birth}"
+        comment_msg = f'{IE}\nСсылка на тг: {telegram_link}\n{old_last_name}\n{region}\n{date_of_birth}' 
+
         if user_from_db.user_enter_otchestvo:
             fio = f"{user_from_db.user_enter_last_name} {user_from_db.user_enter_first_name} {user_from_db.user_enter_otchestvo}"
         else:

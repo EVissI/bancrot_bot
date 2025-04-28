@@ -52,10 +52,15 @@ async def process_succesful_payment(message:Message):
                 telegram_user.end_sub_time += timedelta(days=30)
             else:
                 telegram_user.end_sub_time = datetime.utcnow() + timedelta(days=30)
+            if telegram_user.username:
+                telegram_link = f"https://t.me/{telegram_user.username}"
+            else:
+                telegram_link = f"tg://user?id={telegram_user.telegram_id}"
+
         fio = f"{telegram_user.user_enter_last_name} {telegram_user.user_enter_first_name} {telegram_user.user_enter_otchestvo or ''}"
         success, result = await create_bitrix_deal(
                 title=f"{fio}_ТГБОТ",
-                comment=f"Оплата подписки: {message.successful_payment.total_amount // 100} {message.successful_payment.currency}",
+                comment=f"Оплата подписки: {message.successful_payment.total_amount // 100} {message.successful_payment.currency}\n Ссылка на телеграм:{telegram_link}",
                 category_id='7',  
                 stage_id='C7:UC_CYWJJ2'  # Оплата подписки
             )
@@ -104,11 +109,15 @@ async def process_promo_code(
             else:
                 telegram_user.end_sub_time = datetime.utcnow() + timedelta(days=30*6)
             telegram_user.activate_free_sub = True
+            if telegram_user.username:
+                telegram_link = f"https://t.me/{telegram_user.username}"
+            else:
+                telegram_link = f"tg://user?id={telegram_user.telegram_id}"
 
         fio = f"{telegram_user.user_enter_last_name} {telegram_user.user_enter_first_name} {telegram_user.user_enter_otchestvo or ''}"
         success, result = await create_bitrix_deal(
             title=f"{fio}_ТГБОТ",
-            comment=f"Активация по промокоду: {promo_code}",
+            comment=f"Активация по промокоду: {promo_code}\nCсылка на телеграм:{telegram_link}",
             category_id='7',  # Постбанкротство
             stage_id='C7:NEW'  
         )
