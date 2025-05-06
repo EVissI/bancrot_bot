@@ -56,11 +56,18 @@ async def process_succesful_payment(message:Message):
                 telegram_link = f"https://t.me/{telegram_user.username}"
             else:
                 telegram_link = f"tg://user?id={telegram_user.telegram_id}"
+            tg_message = f"Ссылка на телеграмм: {telegram_link}\n"
+            date_of_birth = f"Дата рождения: {telegram_user.data_of_birth}\n" if telegram_user.data_of_birth else ''
+            region = f"Регион: {telegram_user.region}\n" if telegram_user.region else ''
 
+            comment_msg = f"Оплата подписки: {message.successful_payment.total_amount // 100} {message.successful_payment.currency}\n\
+            {tg_message}\
+            {date_of_birth}\
+            {region}"
         fio = f"{telegram_user.user_enter_last_name} {telegram_user.user_enter_first_name} {telegram_user.user_enter_otchestvo or ''}"
         success, result = await create_bitrix_deal(
                 title=f"{fio}_ТГБОТ",
-                comment=f"Оплата подписки: {message.successful_payment.total_amount // 100} {message.successful_payment.currency}\n Ссылка на телеграм:{telegram_link}",
+                comment=comment_msg,
                 category_id='7',  
                 stage_id='C7:UC_CYWJJ2'  # Оплата подписки
             )
@@ -113,11 +120,17 @@ async def process_promo_code(
                 telegram_link = f"https://t.me/{telegram_user.username}"
             else:
                 telegram_link = f"tg://user?id={telegram_user.telegram_id}"
+        date_of_birth = f"Дата рождения: {telegram_user.data_of_birth}\n" if telegram_user.data_of_birth else ''
+        region = f"Регион: {telegram_user.region}\n" if telegram_user.region else ''
 
+        comment_msg = f"Активация промокода: {promo_code}\n\
+        Ссылка на телеграм:{telegram_link}\
+        {date_of_birth}\
+        {region}"
         fio = f"{telegram_user.user_enter_last_name} {telegram_user.user_enter_first_name} {telegram_user.user_enter_otchestvo or ''}"
         success, result = await create_bitrix_deal(
             title=f"{fio}_ТГБОТ",
-            comment=f"Активация по промокоду: {promo_code}\nCсылка на телеграм:{telegram_link}",
+            comment=comment_msg,
             category_id='7',  # Постбанкротство
             stage_id='C7:NEW'  
         )
