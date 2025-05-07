@@ -98,7 +98,7 @@ async def process_invoice(
         await callback.message.answer('Введите промокод, который вы хотите активировать',reply_markup=BackKeyboard.build_back_kb())
         await state.set_state(EnterPromo.promo)
 
-@payment_router.message(F.text, StateFilter(EnterPromo.promo))
+@payment_router.message(F.text=='popop', StateFilter(EnterPromo.promo))
 async def process_promo_code(
     message:Message, state:FSMContext
 ):
