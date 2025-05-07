@@ -48,6 +48,6 @@ def check_credit() -> InlineKeyboardMarkup:
         text="Проверить кредитную историю",url='https://person.nbki.ru/login',
     )
     kb.button(
-        text="Оспорить кредитную историю",сallback_data="dispute_credit",
+        text="Оспорить кредитную историю",callback_data="dispute_credit"
     )
     return kb.as_markup()
