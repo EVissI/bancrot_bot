@@ -41,3 +41,13 @@ def stop(IE:str) -> InlineKeyboardMarkup:
         text="Прекратить",callback_data=StopBancrData(IE=IE).pack(),
     )
     return kb.as_markup()
+
+def check_credit() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text="Проверить кредитную историю",url='https://person.nbki.ru/login',
+    )
+    kb.button(
+        text="Оспорить кредитную историю",сallback_data="dispute_credit",
+    )
+    return kb.as_markup()

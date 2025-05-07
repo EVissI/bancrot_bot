@@ -11,6 +11,7 @@ from app.bot.routers.user_routers.main_user_router import main_user_router
 from app.bot.routers.user_routers.registration_router import registration_router
 from app.bot.routers.user_routers.process_sub import payment_router
 from app.bot.routers.user_routers.process_stop_butn import stop_router
+from app.bot.routers.user_routers.credit_router import credits_router
 from app.config import settings
 from loguru import logger
 
@@ -24,16 +25,19 @@ registration_router.message.middleware(CheckPaidSubscription())
 payment_router.message.middleware(CheckPaidSubscription())
 stop_router.message.middleware(CheckPaidSubscription())
 main_user_router.message.middleware(CheckPaidSubscription())
+credits_router.message.middleware(CheckPaidSubscription())
 
 registration_router.message.middleware(CheckSub())
 payment_router.message.middleware(CheckSub())
 stop_router.message.middleware(CheckSub())
 main_user_router.message.middleware(CheckSub())
+credits_router.message.middleware(CheckSub())
 
 main_router.include_router(registration_router)
 main_router.include_router(payment_router)
 main_router.include_router(stop_router)
 main_router.include_router(main_user_router)
+main_router.include_router(credits_router)
 
 @main_router.message(CommandStart())
 async def cmd_start(message: Message):

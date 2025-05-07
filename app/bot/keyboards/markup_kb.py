@@ -28,6 +28,7 @@ class BackKeyboard:
 class MainKeyboard:
     __user_kb_texts_dict_ru = {
         'check_isp':'Проверить исполнительные производства',
+        'check_credit':'Проверить кредитную историю',
         'referal':'Порекомендовать друга'
     }
     
@@ -35,6 +36,7 @@ class MainKeyboard:
     def get_user_kb_texts(key = None) -> Dict[str, str] | None:
         """
         'referal',
+        'check_credit'
         'check_isp'
         """
         if key is not None:
@@ -50,7 +52,7 @@ class MainKeyboard:
             kb.button(text=val)
 
         kb.adjust(
-            len(MainKeyboard.get_user_kb_texts()),
+            len(MainKeyboard.get_user_kb_texts()-1,1),
         )
 
         return kb.as_markup(resize_keyboard=True)
