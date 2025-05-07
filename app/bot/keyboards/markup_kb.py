@@ -52,7 +52,7 @@ class MainKeyboard:
             kb.button(text=val)
 
         kb.adjust(
-            len(MainKeyboard.get_user_kb_texts()-1,1),
+            len(MainKeyboard.get_user_kb_texts())-1,1
         )
 
         return kb.as_markup(resize_keyboard=True)
