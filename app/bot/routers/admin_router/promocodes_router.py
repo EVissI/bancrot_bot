@@ -71,7 +71,7 @@ async def process_max_usage(message: Message, state: FSMContext):
             is_active=True
         ))
     async with async_session_maker() as session:
-        promo = PromocodeDAO.find_one_or_none(session,PromocodeFilterModel(
+        promo = await PromocodeDAO.find_one_or_none(session,PromocodeFilterModel(
             code=code,
         ))
         await state.clear()
