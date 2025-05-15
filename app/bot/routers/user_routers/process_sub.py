@@ -91,9 +91,6 @@ async def process_invoice(
     async with async_session_maker() as session:
         telegram_user = await UserDAO.find_one_or_none(session, TelegramIDModel(telegram_id=callback.from_user.id))
     if telegram_user:
-        if telegram_user.activate_free_sub:
-            await callback.answer('Вы уже активировали промокод')
-            return
         await callback.message.delete()
         await callback.message.answer('Введите промокод, который вы хотите активировать',reply_markup=BackKeyboard.build_back_kb())
         await state.set_state(EnterPromo.promo)
