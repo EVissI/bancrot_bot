@@ -197,7 +197,7 @@ async def process_promo_code(
         logger.error(f"Failed to create Bitrix deal for promo activation: {result}")
     async with async_session_maker() as session:
         await UserDAO.update(session,filters=TelegramIDModel(telegram_id=message.from_user.id),values=UserFilterModel.model_validate(telegram_user.to_dict()))
-    msg = f"Промокод {promo_code} успешно активирован на 6 месяцев!\n" + messages.get('after_sub')
+    msg = f"Промокод {promo_code} успешно активирован на {promocode.discount_days} дней!\n" + messages.get('after_sub')
     await message.reply(
         msg, reply_markup=MainKeyboard.build_main_kb(message.from_user.id)
     )
