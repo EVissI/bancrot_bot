@@ -125,7 +125,7 @@ async def back_deactivate_cmd(message: Message, state: FSMContext):
 async def process_deactivate_promocode(message: Message, state: FSMContext):
     async with async_session_maker() as session:
 
-        promocode:Promocode = await PromocodeDAO.find_one(
+        promocode:Promocode = await PromocodeDAO.find_one_or_none(
             session, 
             filters=PromocodeFilterModel(code=message.text)
         )
