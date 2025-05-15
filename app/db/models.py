@@ -41,7 +41,7 @@ class Promocode(Base):
     max_usage: Mapped[Optional[int]] = mapped_column(Integer, default=None)
     activate_count: Mapped[int] = mapped_column(Integer, default=None)
     
-    users = relationship("UserPromocode", back_populates="promocode")
+    users:Mapped["UserPromocode"] = relationship("UserPromocode", back_populates="promocode")
 
 
 class UserPromocode(Base):
@@ -51,5 +51,5 @@ class UserPromocode(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('tel_users.telegram_id'))
     promocode_id: Mapped[int] = mapped_column(Integer, ForeignKey('promocode.id'))
     
-    user = relationship("TelegramUser", backref="used_promocodes")
-    promocode = relationship("Promocode", back_populates="users")
+    user:Mapped["TelegramUser"]  = relationship("TelegramUser", backref="used_promocodes")
+    promocode:Mapped["Promocode"]  = relationship("Promocode", back_populates="users")
