@@ -58,6 +58,7 @@ async def process_max_usage(message: Message, state: FSMContext):
         return await message.answer("Пожалуйста, введите число!")
     
     data = await state.get_data()
+    print(data)
     code=data['code'],
     discount_days=data['discount_days'],
     max_usage = int(message.text) if int(message.text) > 0 else None
