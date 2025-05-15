@@ -24,7 +24,6 @@ class UserModel(TelegramIDModel):
     region: Optional[str]
     old_last_name: Optional[str]
     end_sub_time: Optional[datetime]
-    activate_free_sub: Optional[bool] = False
 
 
 class UserFilterModel(BaseModel):
@@ -38,6 +37,35 @@ class UserFilterModel(BaseModel):
     region: Optional[str] = None
     old_last_name: Optional[str] = None
     end_sub_time: Optional[datetime] = None
-    activate_free_sub: Optional[bool] = None
 
+class PromocodeModel(BaseModel):
+    code: str
+    discount_days: int
+    is_active: bool
+    max_usage: Optional[int]
+    activate_count: int
+
+    class Config:
+        from_attributes = True
+
+
+class PromocodeFilterModel(BaseModel):
+    code: Optional[str] = None
+    discount_days: Optional[int] = None
+    is_active: Optional[bool] = None
+    max_usage: Optional[int] = None
+    activate_count: Optional[int] = None
+
+
+class UserPromocodeModel(BaseModel):
+    user_id: int
+    promocode_id: int
+
+    class Config:
+        from_attributes = True
+
+
+class UserPromocodeFilterModel(BaseModel):
+    user_id: Optional[int] = None
+    promocode_id: Optional[int] = None
     

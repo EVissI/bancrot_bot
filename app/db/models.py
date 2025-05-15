@@ -28,4 +28,28 @@ class TelegramUser(Base):
     region: Mapped[Optional[str]] = mapped_column(String, default=None)
     old_last_name: Mapped[Optional[str]] = mapped_column(String, default=None)
     end_sub_time:Mapped[Optional[datetime]] = mapped_column(DateTime, default=None)
-    activate_free_sub: Mapped[Optional[bool]] = mapped_column(Boolean, default=False)
+
+    used_promocodes:Mapped[list['UserPromocode']] = relationship("UserPromocode", backref="user")
+
+class Promocode(Base):
+    __tablename__ = 'promocode'
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    discount_days: Mapped[int] = mapped_column(Integer, nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    max_usage: Mapped[Optional[int]] = mapped_column(Integer, default=None)
+    activate_count: Mapped[int] = mapped_column(Integer, default=None)
+    
+    users = relationship("UserPromocode", back_populates="promocode")
+
+
+class UserPromocode(Base):
+    __tablename__ = 'user_promocode'
+    
+    id: Mapped[int] = mapped_column(Integer, primary_key=True,autoincrement=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('tel_users.telegram_id'))
+    promocode_id: Mapped[int] = mapped_column(Integer, ForeignKey('promocode.id'))
+    
+    user = relationship("TelegramUser", backref="used_promocodes")
+    promocode = relationship("Promocode", back_populates="users")

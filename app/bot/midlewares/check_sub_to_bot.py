@@ -28,5 +28,4 @@ class CheckPaidSubscription(BaseMiddleware):
                     await event.answer("Ваша подписка истекла. Пожалуйста, продлите её, чтобы продолжить пользоваться ботом.",reply_markup=get_subscription_keyboard())
                     return  
             return await handler(event, data)
-        
-        return await handler(event, data)
+        await event.answer("Вас нет в системе, пройдите регистрацию командой /start")

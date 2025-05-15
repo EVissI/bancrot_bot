@@ -45,7 +45,7 @@ async def cmd_start(message: Message):
     async with async_session_maker() as session:
         user_from_db = await UserDAO.find_one_or_none(session,TelegramIDModel(telegram_id=message.from_user.id))
         if user_from_db:
-            await message.answer(f'Привет, {user_from_db.user_enter_first_name}!', reply_markup=MainKeyboard.build_main_kb())
+            await message.answer(f'Привет, {user_from_db.user_enter_first_name}!', reply_markup=MainKeyboard.build_main_kb(message.from_user.id))
             return
     chat_member = await message.bot.get_chat_member(chat_id=settings.CHAT_TO_SUB, user_id=message.from_user.id)
     if chat_member.status == 'left':
@@ -71,6 +71,6 @@ async def check_sub(callback: CallbackQuery):
     async with async_session_maker() as session:
         telegram_user = await UserDAO.find_one_or_none(session, TelegramIDModel(telegram_id=callback.from_user.id))
     if telegram_user:
-        await callback.message.answer('Отлично, можете пользоваться ботом', reply_markup=MainKeyboard.build_main_kb())
+        await callback.message.answer('Отлично, можете пользоваться ботом', reply_markup=MainKeyboard.build_main_kb(callback.from_user.id))
     else:
         await callback.message.answer('Отлично! Для того чтобы пользоваться ботом, нужно пройти маленькое анкетирование',reply_markup=im_ready())
