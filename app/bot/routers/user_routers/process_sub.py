@@ -101,7 +101,7 @@ async def process_promo_code(
 ):
     promo_code = message.text
     async with async_session_maker() as session:
-            promocode = await PromocodeDAO.find_one(
+            promocode = await PromocodeDAO.find_one_or_none(
                 session,
                 filters=PromocodeFilterModel(code=promo_code, is_active=True)
             )
@@ -125,7 +125,7 @@ async def process_promo_code(
                 await state.clear()
                 return
             
-            user_promocode = await UserPromocodeDAO.find_one(
+            user_promocode = await UserPromocodeDAO.find_one_or_none(
                 session,
                 filters=UserPromocodeFilterModel(
                     user_id=message.from_user.id,
