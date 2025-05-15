@@ -29,7 +29,7 @@ class TelegramUser(Base):
     old_last_name: Mapped[Optional[str]] = mapped_column(String, default=None)
     end_sub_time:Mapped[Optional[datetime]] = mapped_column(DateTime, default=None)
 
-    used_promocodes:Mapped[list['UserPromocode']] = relationship("UserPromocode", backref="user")
+    used_promocodes:Mapped[list['UserPromocode']] = relationship("UserPromocode", back_populates="user")
 
 class Promocode(Base):
     __tablename__ = 'promocode'
@@ -51,5 +51,5 @@ class UserPromocode(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey('tel_users.telegram_id'))
     promocode_id: Mapped[int] = mapped_column(Integer, ForeignKey('promocode.id'))
     
-    user:Mapped["TelegramUser"]  = relationship("TelegramUser", backref="used_promocodes")
+    user:Mapped["TelegramUser"]  = relationship("TelegramUser", back_populates="used_promocodes")
     promocode:Mapped["Promocode"]  = relationship("Promocode", back_populates="users")
