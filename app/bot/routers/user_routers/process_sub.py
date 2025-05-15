@@ -104,94 +104,94 @@ async def process_promo_code(
 ):
     promo_code = message.text
     async with async_session_maker() as session:
-        promocode = await PromocodeDAO.find_one(
-            session,
-            filters=PromocodeFilterModel(code=promo_code, is_active=True)
-        )
-
-        if not promocode:
-            await message.answer('Промокод неверный или неактивен')
-            await message.answer(
-                'Для работы бота нужно, либо оплатить подписку, либо активировать промокод',
-                reply_markup=get_subscription_keyboard()
-            )
-            await state.clear()
-            return
-        
-
-        if promocode.max_usage and promocode.activate_count >= promocode.max_usage:
-            await message.answer('Превышен лимит использования промокода')
-            await message.answer(
-                'Для работы бота нужно, либо оплатить подписку, либо активировать другой промокод',
-                reply_markup=get_subscription_keyboard()
-            )
-            await state.clear()
-            return
-        
-        user_promocode = await UserPromocodeDAO.find_one(
-            session,
-            filters=UserPromocodeFilterModel(
-                user_id=message.from_user.id,
-                promocode_id=promocode.id
-            )
-        )
-
-        if user_promocode:
-            await message.answer('Вы уже использовали этот промокод')
-            await message.answer(
-                'Для работы бота нужно, либо оплатить подписку, либо активировать другой промокод',
-                reply_markup=get_subscription_keyboard()
-            )
-            await state.clear()
-            return
-
-        telegram_user = await UserDAO.find_one_or_none(
-            session, 
-            TelegramIDModel(telegram_id=message.from_user.id))
-        if telegram_user:
-            if telegram_user.end_sub_time and telegram_user.end_sub_time > datetime.utcnow():
-                telegram_user.end_sub_time += timedelta(days=promocode.discount_days)
-            else:
-                telegram_user.end_sub_time = datetime.utcnow() + timedelta(days=promocode.discount_days)
-
-
-            await UserPromocodeDAO.add(
+            promocode = await PromocodeDAO.find_one(
                 session,
-                UserPromocodeModel(
-                    user_id=telegram_user.telegram_id,
+                filters=PromocodeFilterModel(code=promo_code, is_active=True)
+            )
+
+            if not promocode:
+                await message.answer('Промокод неверный или неактивен')
+                await message.answer(
+                    'Для работы бота нужно, либо оплатить подписку, либо активировать промокод',
+                    reply_markup=get_subscription_keyboard()
+                )
+                await state.clear()
+                return
+            
+
+            if promocode.max_usage and promocode.activate_count >= promocode.max_usage:
+                await message.answer('Превышен лимит использования промокода')
+                await message.answer(
+                    'Для работы бота нужно, либо оплатить подписку, либо активировать другой промокод',
+                    reply_markup=get_subscription_keyboard()
+                )
+                await state.clear()
+                return
+            
+            user_promocode = await UserPromocodeDAO.find_one(
+                session,
+                filters=UserPromocodeFilterModel(
+                    user_id=message.from_user.id,
                     promocode_id=promocode.id
                 )
             )
 
-            promocode.activate_count += 1
-            await PromocodeDAO.update(
-                session,
-                filters=PromocodeFilterModel(id=promocode.id),
-                values=PromocodeFilterModel(activate_count=promocode.activate_count)
+            if user_promocode:
+                await message.answer('Вы уже использовали этот промокод')
+                await message.answer(
+                    'Для работы бота нужно, либо оплатить подписку, либо активировать другой промокод',
+                    reply_markup=get_subscription_keyboard()
+                )
+                await state.clear()
+                return
+
+            telegram_user = await UserDAO.find_one_or_none(
+                session, 
+                TelegramIDModel(telegram_id=message.from_user.id))
+            if telegram_user:
+                if telegram_user.end_sub_time and telegram_user.end_sub_time > datetime.utcnow():
+                    telegram_user.end_sub_time += timedelta(days=promocode.discount_days)
+                else:
+                    telegram_user.end_sub_time = datetime.utcnow() + timedelta(days=promocode.discount_days)
+
+
+                await UserPromocodeDAO.add(
+                    session,
+                    UserPromocodeModel(
+                        user_id=telegram_user.telegram_id,
+                        promocode_id=promocode.id
+                    )
+                )
+
+                promocode.activate_count += 1
+                await PromocodeDAO.update(
+                    session,
+                    filters=PromocodeFilterModel(id=promocode.id),
+                    values=PromocodeFilterModel(activate_count=promocode.activate_count)
+                )
+                
+            if telegram_user.username:
+                telegram_link = f"https://t.me/{telegram_user.username}"
+            else:
+                telegram_link = f"tg://user?id={telegram_user.telegram_id}"
+            date_of_birth = f"Дата рождения: {telegram_user.data_of_birth}\n" if telegram_user.data_of_birth else ''
+            region = f"Регион: {telegram_user.region}\n" if telegram_user.region else ''
+
+            comment_msg = f"Активация промокода: {promo_code}\n\
+            Ссылка на телеграм:{telegram_link}\
+            {date_of_birth}\
+            {region}"
+            fio = f"{telegram_user.user_enter_last_name} {telegram_user.user_enter_first_name} {telegram_user.user_enter_otchestvo or ''}"
+            success, result = await create_bitrix_deal(
+                title=f"{fio}_ТГБОТ",
+                comment=comment_msg,
+                category_id='7',  # Постбанкротство
+                stage_id='C7:NEW'  
             )
-            
-        if telegram_user.username:
-            telegram_link = f"https://t.me/{telegram_user.username}"
-        else:
-            telegram_link = f"tg://user?id={telegram_user.telegram_id}"
-        date_of_birth = f"Дата рождения: {telegram_user.data_of_birth}\n" if telegram_user.data_of_birth else ''
-        region = f"Регион: {telegram_user.region}\n" if telegram_user.region else ''
+            if not success:
+                logger.error(f"Failed to create Bitrix deal for promo activation: {result}")
 
-        comment_msg = f"Активация промокода: {promo_code}\n\
-        Ссылка на телеграм:{telegram_link}\
-        {date_of_birth}\
-        {region}"
-        fio = f"{telegram_user.user_enter_last_name} {telegram_user.user_enter_first_name} {telegram_user.user_enter_otchestvo or ''}"
-        success, result = await create_bitrix_deal(
-            title=f"{fio}_ТГБОТ",
-            comment=comment_msg,
-            category_id='7',  # Постбанкротство
-            stage_id='C7:NEW'  
-        )
-        if not success:
-            logger.error(f"Failed to create Bitrix deal for promo activation: {result}")
-
-        await UserDAO.update(session,filters=TelegramIDModel(telegram_id=message.from_user.id),values=UserFilterModel.model_validate(telegram_user.to_dict()))
+            await UserDAO.update(session,filters=TelegramIDModel(telegram_id=message.from_user.id),values=UserFilterModel.model_validate(telegram_user.to_dict()))
     msg = f"Промокод {promo_code} успешно активирован на 6 месяцев!\n" + messages.get('after_sub')
     await message.reply(
         msg, reply_markup=MainKeyboard.build_main_kb(message.from_user.id)

@@ -70,14 +70,14 @@ async def process_max_usage(message: Message, state: FSMContext):
             activate_count=0,
             is_active=True
         ))
-    await state.clear()
-    await message.answer(
-        f"Промокод успешно создан!\n"
-        f"Код: {promo.code}\n"
-        f"Дней подписки: {promo.discount_days}\n"
-        f"Макс. использований: {promo.max_usage or 'без ограничений'}",
-        reply_markup=PromocodeKeyboard.build_promocode_kb()
-    )
+        await state.clear()
+        await message.answer(
+            f"Промокод успешно создан!\n"
+            f"Код: {promo.code}\n"
+            f"Дней подписки: {promo.discount_days}\n"
+            f"Макс. использований: {promo.max_usage or 'без ограничений'}",
+            reply_markup=PromocodeKeyboard.build_promocode_kb()
+        )
 
 @promocode_router.message(F.text == PromocodeKeyboard.get_promocode_kb_texts('view_promocodes'))
 async def view_active_promocodes(message: Message):
