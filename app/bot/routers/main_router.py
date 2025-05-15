@@ -5,6 +5,7 @@ from aiogram.types import Message,CallbackQuery
 
 from app.bot.keyboards.inline_kb import get_subscription_on_chanel_keyboard, im_ready,get_subscription_keyboard
 from app.bot.keyboards.markup_kb import MainKeyboard
+from app.bot.midlewares.admin_middleware import CheckAdmin
 from app.bot.midlewares.check_sub import CheckSub
 from app.bot.midlewares.check_sub_to_bot import CheckPaidSubscription
 from app.bot.routers.user_routers.main_user_router import main_user_router
@@ -33,6 +34,8 @@ payment_router.message.middleware(CheckSub())
 stop_router.message.middleware(CheckSub())
 main_user_router.message.middleware(CheckSub())
 credits_router.message.middleware(CheckSub())
+
+admin_router.message.middleware(CheckAdmin())
 
 main_router.include_router(registration_router)
 main_router.include_router(payment_router)
