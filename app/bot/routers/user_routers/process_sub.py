@@ -113,25 +113,25 @@ async def process_promo_code(
             filters=PromocodeFilterModel(code=promo_code, is_active=True)
         )
 
-        if not promocode:
-            await message.answer('Промокод неверный или неактивен')
-            await message.answer(
-                'Для работы бота нужно, либо оплатить подписку, либо активировать промокод',
-                reply_markup=get_subscription_keyboard()
-            )
-            await state.clear()
-            return
-        
+    if not promocode:
+        await message.answer('Промокод неверный или неактивен')
+        await message.answer(
+            'Для работы бота нужно, либо оплатить подписку, либо активировать промокод',
+            reply_markup=get_subscription_keyboard()
+        )
+        await state.clear()
+        return
+    
 
-        if promocode.max_usage and promocode.activate_count >= promocode.max_usage:
-            await message.answer('Превышен лимит использования промокода')
-            await message.answer(
-                'Для работы бота нужно, либо оплатить подписку, либо активировать другой промокод',
-                reply_markup=get_subscription_keyboard()
-            )
-            await state.clear()
-            return
-        
+    if promocode.max_usage and promocode.activate_count >= promocode.max_usage:
+        await message.answer('Превышен лимит использования промокода')
+        await message.answer(
+            'Для работы бота нужно, либо оплатить подписку, либо активировать другой промокод',
+            reply_markup=get_subscription_keyboard()
+        )
+        await state.clear()
+        return
+    async with async_session_maker() as session:
         user_promocode = await UserPromocodeDAO.find_one_or_none(
             session,
             filters=UserPromocodeFilterModel(
@@ -140,34 +140,34 @@ async def process_promo_code(
             )
         )
 
-        if user_promocode:
-            await message.answer('Вы уже использовали этот промокод')
-            await message.answer(
-                'Для работы бота нужно, либо оплатить подписку, либо активировать другой промокод',
-                reply_markup=get_subscription_keyboard()
-            )
-            await state.clear()
-            return
-
+    if user_promocode:
+        await message.answer('Вы уже использовали этот промокод')
+        await message.answer(
+            'Для работы бота нужно, либо оплатить подписку, либо активировать другой промокод',
+            reply_markup=get_subscription_keyboard()
+        )
+        await state.clear()
+        return
+    async with async_session_maker() as session:
         telegram_user = await UserDAO.find_one_or_none(
             session, 
             TelegramIDModel(telegram_id=message.from_user.id))
-        if telegram_user:
-            if telegram_user.end_sub_time and telegram_user.end_sub_time > datetime.utcnow():
-                telegram_user.end_sub_time += timedelta(days=promocode.discount_days)
-            else:
-                telegram_user.end_sub_time = datetime.utcnow() + timedelta(days=promocode.discount_days)
+    if telegram_user:
+        if telegram_user.end_sub_time and telegram_user.end_sub_time > datetime.utcnow():
+            telegram_user.end_sub_time += timedelta(days=promocode.discount_days)
+        else:
+            telegram_user.end_sub_time = datetime.utcnow() + timedelta(days=promocode.discount_days)
 
 
-            await UserPromocodeDAO.add(
-                session,
-                UserPromocodeModel(
-                    user_id=telegram_user.telegram_id,
-                    promocode_id=promocode.id
-                )
+        await UserPromocodeDAO.add(
+            session,
+            UserPromocodeModel(
+                user_id=telegram_user.telegram_id,
+                promocode_id=promocode.id
             )
+        )
 
-            promocode.activate_count += 1
+        promocode.activate_count += 1
     async with async_session_maker() as session:
         await PromocodeDAO.update(
             session,
