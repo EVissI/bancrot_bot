@@ -13,8 +13,7 @@ from app.db.dao import UserDAO
 from app.db.database import async_session_maker
 from app.bot.keyboards.markup_kb import MainKeyboard
 from app.db.schemas import TelegramIDModel
-from app.config import settings
-from app.bot.init import bot
+from app.config import settings,bot
 import re
 
 main_user_router = Router()
