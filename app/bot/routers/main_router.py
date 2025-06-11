@@ -13,6 +13,7 @@ from app.bot.routers.user_routers.registration_router import registration_router
 from app.bot.routers.user_routers.process_sub import payment_router
 from app.bot.routers.user_routers.process_stop_butn import stop_router
 from app.bot.routers.user_routers.credit_router import credits_router
+from app.bot.routers.user_routers.balance import balance_router
 from app.bot.routers.admin_router.main_admin_router import admin_router
 from app.config import settings
 from loguru import logger
@@ -42,7 +43,7 @@ main_router.include_router(payment_router)
 main_router.include_router(stop_router)
 main_router.include_router(main_user_router)
 main_router.include_router(credits_router)
-
+main_router.include_router(balance_router)
 main_router.include_router(admin_router)
 
 

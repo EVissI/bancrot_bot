@@ -30,7 +30,9 @@ class MainKeyboard:
     __user_kb_texts_dict_ru = {
         "check_isp": "Проверить исполнительные производства",
         "check_credit": "Проверить кредитную историю",
+        "balance":"Баланс",
         "referal": "Порекомендовать друга",
+
     }
 
     __admin_kb_texts_dict_ru = {"promocods": "Промокоды"}

@@ -28,6 +28,7 @@ class TelegramUser(Base):
     region: Mapped[Optional[str]] = mapped_column(String, default=None)
     old_last_name: Mapped[Optional[str]] = mapped_column(String, default=None)
     end_sub_time:Mapped[Optional[datetime]] = mapped_column(DateTime, default=None)
+    privacy_accepted: Mapped[bool] = mapped_column(Boolean, default=False)
 
     used_promocodes:Mapped[list['UserPromocode']] = relationship("UserPromocode", back_populates="user")
 

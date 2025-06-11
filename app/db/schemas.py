@@ -24,6 +24,7 @@ class UserModel(TelegramIDModel):
     region: Optional[str]
     old_last_name: Optional[str]
     end_sub_time: Optional[datetime]
+    privacy_accepted: bool = False
 
 
 class UserFilterModel(BaseModel):
@@ -37,6 +38,7 @@ class UserFilterModel(BaseModel):
     region: Optional[str] = None
     old_last_name: Optional[str] = None
     end_sub_time: Optional[datetime] = None
+    privacy_accepted: bool = None
 
 class PromocodeModel(BaseModel):
     code: str

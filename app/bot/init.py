@@ -1,5 +1,6 @@
 ﻿import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from app.bot.midlewares.message_history import MessageCleanerMiddleware
 from app.bot.routers.main_router import main_router
 from app.bot.sheldured_task.send_notification import check_db_and_send_notification
 from app.config import setup_logger
@@ -52,6 +53,8 @@ def start_scheduler():
     logger.info("Планировщик задач запущен.")
 
 async def main():
+    # регистрация middleware
+    dp.message.middleware(MessageCleanerMiddleware())
     # регистрация роутеров
     dp.include_router(main_router)
 

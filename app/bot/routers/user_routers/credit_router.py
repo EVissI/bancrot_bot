@@ -11,6 +11,7 @@ from app.db.schemas import TelegramIDModel
 from app.db.database import async_session_maker
 
 credits_router = Router()
+
 @credits_router.message(F.text == MainKeyboard.get_user_kb_texts().get('check_credit'))
 async def process_check_credit(message:Message):
     await message.answer('Кредитная история',reply_markup=check_credit())

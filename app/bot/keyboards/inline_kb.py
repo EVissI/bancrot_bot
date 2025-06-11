@@ -51,3 +51,32 @@ def check_credit() -> InlineKeyboardMarkup:
         text="Оспорить кредитную историю",callback_data="dispute_credit"
     )
     return kb.as_markup()
+
+class BalanceData(CallbackData, prefix="balance"):
+    action:str
+
+def get_balance_keyboard() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text="Баланс",callback_data=BalanceData(action="balance").pack()
+    )
+    kb.button(
+        text="Пополнить",callback_data="payment_sub",
+    )
+    kb.button(
+        text="Активировать промо",callback_data="promo_code",
+    )
+    return kb.as_markup()
+
+def get_consent_keyboard() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text="✅ Согласен с условиями",
+        callback_data="accept_privacy"
+    )
+    kb.button(
+        text="❌ Не согласен",
+        callback_data="decline_privacy"
+    )
+    kb.adjust(1)
+    return kb.as_markup()
