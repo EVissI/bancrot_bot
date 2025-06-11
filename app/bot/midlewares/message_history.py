@@ -104,22 +104,16 @@ class MessageCleanerMiddleware(BaseMiddleware):
             except Exception as e:
                 logger.error(f"Failed to add user message to history: {e}")
 
-            # Process the message with the handler and get bot's response
+            # Process the message with the handler
             response = await handler(event, data)
 
             # Handle different types of responses
             if isinstance(response, Message):
                 await self.process_bot_message(chat_id, response)
             elif isinstance(response, list):
-                # If handler returns list of messages
                 for msg in response:
                     if isinstance(msg, Message):
                         await self.process_bot_message(chat_id, msg)
-
-            # Получаем последнее сообщение бота через сам event
-            async for msg in event.bot.get_chat_history(chat_id, limit=1):
-                if msg.from_user.id == event.bot.id:
-                    await self.process_bot_message(chat_id, msg)
 
             # Get and delete old messages
             try:
@@ -132,6 +126,9 @@ class MessageCleanerMiddleware(BaseMiddleware):
                             chat_id=chat_id, message_id=msg_id
                         )
                         logger.debug(f"Successfully deleted message {msg_id}")
+                        # Remove deleted message from history
+                        if chat_id in message_history.messages:
+                            message_history.messages[chat_id].pop(msg_id, None)
                     except TelegramBadRequest as e:
                         if "message to delete not found" in str(e).lower():
                             if chat_id in message_history.messages:
