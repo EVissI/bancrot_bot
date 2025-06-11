@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     CHAT_TO_SUB: str
     WORK_CHAT_ID: int
     REG_PROMO_CODE:str = 'TEST'
+    BOT_USERNAME:str
 
     YO_KASSA_TEL_API_KEY:str
     BITRIKS_WEBHOOK_URL:str

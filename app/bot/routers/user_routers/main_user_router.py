@@ -1,19 +1,25 @@
 ﻿from datetime import datetime, timedelta
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, PreCheckoutQuery, Message
+from aiogram.types import (
+    CallbackQuery,
+    PreCheckoutQuery,
+    Message,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+)
 from aiogram.filters import StateFilter
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 from loguru import logger
 
-from app.bot.common.utils import create_bitrix_deal
+from app.bot.common.utils import create_bitrix_deal, bitrix_add_comment_to_deal
 from app.bot.midlewares.message_history import track_bot_message
 from app.bot.sheldured_task.send_notification import check_user_and_send_notification
 from app.db.dao import UserDAO
 from app.db.database import async_session_maker
 from app.bot.keyboards.markup_kb import MainKeyboard
 from app.db.schemas import TelegramIDModel
-from app.config import settings,bot
+from app.config import settings, bot
 import re
 
 main_user_router = Router()
@@ -28,11 +34,14 @@ class Referal(StatesGroup):
 async def process_check_isp(message: Message):
     await check_user_and_send_notification(message.from_user.id)
 
+
 def is_valid_phone(phone: str) -> bool:
     return bool(re.fullmatch(r"\+?\d{10,15}", phone.strip()))
 
+
 def is_valid_fio(fio: str) -> bool:
     return len(fio.strip().split()) >= 2
+
 
 @main_user_router.message(F.text == MainKeyboard.get_user_kb_texts().get("referal"))
 async def process_referal(message: Message, state: FSMContext):
@@ -96,6 +105,14 @@ async def process_referal(message: Message, state: FSMContext):
             if not success:
                 logger.error(f"Failed to create Bitrix deal: {result}")
 
+            # Получите deal_id из Bitrix24 (например, result["ID"] если API возвращает ID)
+            deal_id = result.get("ID") if isinstance(result, dict) else None
+
+            telegram_link = (
+                f"https://t.me/{user.username}"
+                if user.username
+                else f"tg://user?id={user.telegram_id}"
+            )
             notify_text = (
                 "🆕 <b>Новая заявка: Рекомендация друга (БФЛ)</b>\n"
                 f"<b>Рекомендуемый:</b> {recommended_fio}\n"
@@ -103,15 +120,56 @@ async def process_referal(message: Message, state: FSMContext):
                 f"<b>Рекомендатель:</b> {referrer_info}\n"
                 f"<b>Telegram рекомендателя:</b> {telegram_link}"
             )
+            if deal_id:
+                kb = InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [
+                            InlineKeyboardButton(
+                                text="Ответить клиенту",
+                                url=f"https://t.me/{settings.BOT_USERNAME}?start=referal_comment_{deal_id}",
+                            )
+                        ]
+                    ]
+                )
+            else:
+                kb = None
 
-
-            await bot.send_message(
-                settings.WORK_CHAT_ID, notify_text, parse_mode="HTML"
+            notify_msg = await bot.send_message(
+                settings.WORK_CHAT_ID, notify_text, parse_mode="HTML", reply_markup=kb
             )
+            track_bot_message(settings.WORK_CHAT_ID, notify_msg)
 
     msg = await message.answer(
         "Спасибо за то что не остались в стороне и решили помочь своему близкому. "
         "Если человек, которому вы решили помочь, оформит у нас банкротство, вы получите 10 000 рублей."
     )
+    track_bot_message(message.chat.id, msg)
+    await state.clear()
+
+
+class ReferalComment(StatesGroup):
+    waiting_comment = State()
+
+
+@main_user_router.message(F.text.startswith("/start referal_comment_"))
+async def start_referal_comment(message: Message, state: FSMContext):
+    deal_id = message.text.split("_")[-1]
+    await state.update_data(deal_id=deal_id)
+    msg = await message.answer("Введите комментарий для клиента:")
+    track_bot_message(message.chat.id, msg)
+    await state.set_state(ReferalComment.waiting_comment)
+
+
+@main_user_router.message(StateFilter(ReferalComment.waiting_comment))
+async def process_referal_comment(message: Message, state: FSMContext):
+    data = await state.get_data()
+    deal_id = data.get("deal_id")
+    comment = message.text
+
+    success = await bitrix_add_comment_to_deal(deal_id, comment)
+    if success:
+        msg = await message.answer("Комментарий отправлен в Bitrix24!")
+    else:
+        msg = await message.answer("Ошибка при отправке комментария в Bitrix24.")
     track_bot_message(message.chat.id, msg)
     await state.clear()

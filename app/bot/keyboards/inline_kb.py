@@ -45,7 +45,7 @@ def stop(IE:str) -> InlineKeyboardMarkup:
 def check_credit() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(
-        text="Проверить кредитную историю",url='https://person.nbki.ru/login',
+        text="Проверить кредитную историю",url='https://bkifssptg.netlify.app/',
     )
     kb.button(
         text="Оспорить кредитную историю",callback_data="dispute_credit"
