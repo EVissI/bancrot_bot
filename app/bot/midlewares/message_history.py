@@ -71,6 +71,24 @@ message_history = MessageHistory()
 
 
 class MessageCleanerMiddleware(BaseMiddleware):
+    async def process_bot_message(self, chat_id: int, message: Message):
+        """Helper method to process bot messages"""
+        try:
+            message_history.add_message(chat_id, message.message_id)
+
+            # Check if it's a welcome message
+            if message.text and "Добро пожаловать" in message.text:
+                message_history.set_welcome_message(chat_id, message.message_id)
+
+            # Check if it's an IP result message
+            if (
+                message.text
+                and "Обнаружено исполнительное производство" in message.text
+            ):
+                message_history.add_ip_result(chat_id, message.message_id)
+        except Exception as e:
+            logger.error(f"Failed to process bot message: {e}")
+
     async def __call__(
         self,
         handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
@@ -89,48 +107,44 @@ class MessageCleanerMiddleware(BaseMiddleware):
             # Process the message with the handler and get bot's response
             response = await handler(event, data)
 
-            # If the handler returned a message, add it to history
+            # Handle different types of responses
             if isinstance(response, Message):
-                try:
-                    message_history.add_message(chat_id, response.message_id)
+                await self.process_bot_message(chat_id, response)
+            elif isinstance(response, list):
+                # If handler returns list of messages
+                for msg in response:
+                    if isinstance(msg, Message):
+                        await self.process_bot_message(chat_id, msg)
 
-                    # Check if it's a welcome message
-                    if response.text and "Добро пожаловать" in response.text:
-                        message_history.set_welcome_message(
-                            chat_id, response.message_id
-                        )
+            # Получаем последнее сообщение бота через сам event
+            async for msg in event.bot.get_chat_history(chat_id, limit=1):
+                if msg.from_user.id == event.bot.id:
+                    await self.process_bot_message(chat_id, msg)
 
-                    # Check if it's an IP result message
-                    if (
-                        response.text
-                        and "Обнаружено исполнительное производство" in response.text
-                    ):
-                        message_history.add_ip_result(chat_id, response.message_id)
-                except Exception as e:
-                    logger.error(f"Failed to add bot response to history: {e}")
-
-            # Get messages to delete
+            # Get and delete old messages
             try:
                 messages_to_delete = message_history.get_messages_to_delete(chat_id)
-            except Exception as e:
-                logger.error(f"Failed to get messages to delete: {e}")
-                messages_to_delete = []
+                logger.debug(f"Messages to delete: {messages_to_delete}")
 
-            # Delete old messages
-            for msg_id in messages_to_delete:
-                try:
-                    await event.bot.delete_message(chat_id=chat_id, message_id=msg_id)
-                except TelegramBadRequest as e:
-                    if "message to delete not found" in str(e).lower():
-                        # Message already deleted, remove from history
-                        if chat_id in message_history.messages:
-                            message_history.messages[chat_id].pop(msg_id, None)
-                    else:
-                        logger.error(
-                            f"TelegramBadRequest while deleting message {msg_id}: {e}"
+                for msg_id in messages_to_delete:
+                    try:
+                        await event.bot.delete_message(
+                            chat_id=chat_id, message_id=msg_id
                         )
-                except Exception as e:
-                    logger.error(f"Failed to delete message {msg_id}: {e}")
+                        logger.debug(f"Successfully deleted message {msg_id}")
+                    except TelegramBadRequest as e:
+                        if "message to delete not found" in str(e).lower():
+                            if chat_id in message_history.messages:
+                                message_history.messages[chat_id].pop(msg_id, None)
+                        else:
+                            logger.error(
+                                f"TelegramBadRequest while deleting message {msg_id}: {e}"
+                            )
+                    except Exception as e:
+                        logger.error(f"Failed to delete message {msg_id}: {e}")
+
+            except Exception as e:
+                logger.error(f"Failed to process message deletion: {e}")
 
             return response
 
