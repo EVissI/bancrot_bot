@@ -105,9 +105,6 @@ async def process_referal(message: Message, state: FSMContext):
             if not success:
                 logger.error(f"Failed to create Bitrix deal: {result}")
 
-            # Получите deal_id из Bitrix24 (например, result["ID"] если API возвращает ID)
-            deal_id = result.get("ID") if isinstance(result, dict) else None
-
             telegram_link = (
                 f"https://t.me/{user.username}"
                 if user.username
@@ -120,13 +117,13 @@ async def process_referal(message: Message, state: FSMContext):
                 f"<b>Рекомендатель:</b> {referrer_info}\n"
                 f"<b>Telegram рекомендателя:</b> {telegram_link}"
             )
-            if deal_id:
+            if result:
                 kb = InlineKeyboardMarkup(
                     inline_keyboard=[
                         [
                             InlineKeyboardButton(
                                 text="Ответить клиенту",
-                                url=f"https://t.me/{settings.BOT_USERNAME}?start=referal_comment_{deal_id}",
+                                url=f"https://t.me/{settings.BOT_USERNAME}?start=referal_comment_{result}",
                             )
                         ]
                     ]
@@ -134,10 +131,9 @@ async def process_referal(message: Message, state: FSMContext):
             else:
                 kb = None
 
-            notify_msg = await bot.send_message(
+            await bot.send_message(
                 settings.WORK_CHAT_ID, notify_text, parse_mode="HTML", reply_markup=kb
             )
-            track_bot_message(settings.WORK_CHAT_ID, notify_msg)
 
     msg = await message.answer(
         "Спасибо за то что не остались в стороне и решили помочь своему близкому. "
