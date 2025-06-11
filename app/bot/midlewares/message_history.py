@@ -1,6 +1,6 @@
 ﻿from typing import Dict, Any, Callable, Awaitable
 from datetime import datetime
-from aiogram import BaseMiddleware
+from aiogram import BaseMiddleware, Bot
 from aiogram.types import Message
 from aiogram.exceptions import TelegramBadRequest
 from loguru import logger
@@ -71,6 +71,16 @@ message_history = MessageHistory()
 
 
 class MessageCleanerMiddleware(BaseMiddleware):
+    async def track_message(self, chat_id: int, message: Message) -> None:
+        """Track bot message"""
+        if message and message.message_id:
+            message_history.add_message(chat_id, message.message_id)
+            if message.text:
+                if "Добро пожаловать" in message.text:
+                    message_history.set_welcome_message(chat_id, message.message_id)
+                elif "Обнаружено исполнительное производство" in message.text:
+                    message_history.add_ip_result(chat_id, message.message_id)
+
     async def __call__(
         self,
         handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
@@ -79,56 +89,70 @@ class MessageCleanerMiddleware(BaseMiddleware):
     ) -> Any:
         try:
             chat_id = event.chat.id
+            bot: Bot = event.bot
 
-            # Add user's message to history
+            # Track user message
             message_history.add_message(chat_id, event.message_id)
 
-            # Process the message and get bot's response
-            original_send_message = event.bot.send_message
+            # Patch all message sending methods
+            original_methods = {
+                "send_message": bot.send_message,
+                "reply": event.reply,
+                "answer": event.answer,
+            }
 
-            # Override send_message to track bot responses
-            async def tracked_send_message(*args, **kwargs):
-                msg = await original_send_message(*args, **kwargs)
-                # Add bot's message to history
-                message_history.add_message(chat_id, msg.message_id)
+            async def track_and_call(method: Callable, *args, **kwargs) -> Message:
+                result = await method(*args, **kwargs)
+                await self.track_message(chat_id, result)
+                return result
 
-                # Check for special messages
-                if msg.text:
-                    if "Добро пожаловать" in msg.text:
-                        message_history.set_welcome_message(chat_id, msg.message_id)
-                    elif "Обнаружено исполнительное производство" in msg.text:
-                        message_history.add_ip_result(chat_id, msg.message_id)
-                return msg
+            # Replace methods with tracked versions
+            bot.send_message = lambda *args, **kwargs: track_and_call(
+                original_methods["send_message"], *args, **kwargs
+            )
+            event.reply = lambda *args, **kwargs: track_and_call(
+                original_methods["reply"], *args, **kwargs
+            )
+            event.answer = lambda *args, **kwargs: track_and_call(
+                original_methods["answer"], *args, **kwargs
+            )
 
-            # Replace send_message with our tracked version
-            event.bot.send_message = tracked_send_message
-
-            # Handle the message
+            # Process message
             response = await handler(event, data)
 
-            # Restore original send_message
-            event.bot.send_message = original_send_message
+            # Restore original methods
+            bot.send_message = original_methods["send_message"]
+            event.reply = original_methods["reply"]
+            event.answer = original_methods["answer"]
 
-            # Get and delete old messages
-            messages_to_delete = message_history.get_messages_to_delete(chat_id)
-            logger.debug(f"Messages to delete: {messages_to_delete}")
+            # Track response if it's a message
+            if isinstance(response, Message):
+                await self.track_message(chat_id, response)
 
-            for msg_id in messages_to_delete:
-                try:
-                    await event.bot.delete_message(chat_id=chat_id, message_id=msg_id)
-                    logger.debug(f"Successfully deleted message {msg_id}")
-                    if chat_id in message_history.messages:
-                        message_history.messages[chat_id].pop(msg_id, None)
-                except TelegramBadRequest as e:
-                    if "message to delete not found" in str(e).lower():
+            # Delete old messages
+            try:
+                messages_to_delete = message_history.get_messages_to_delete(chat_id)
+                logger.debug(f"Messages to delete: {messages_to_delete}")
+
+                for msg_id in messages_to_delete:
+                    try:
+                        await bot.delete_message(chat_id=chat_id, message_id=msg_id)
+                        logger.debug(f"Successfully deleted message {msg_id}")
                         if chat_id in message_history.messages:
                             message_history.messages[chat_id].pop(msg_id, None)
-                    else:
-                        logger.error(
-                            f"TelegramBadRequest while deleting message {msg_id}: {e}"
-                        )
-                except Exception as e:
-                    logger.error(f"Failed to delete message {msg_id}: {e}")
+                    except TelegramBadRequest as e:
+                        if "message to delete not found" in str(e).lower():
+                            if chat_id in message_history.messages:
+                                message_history.messages[chat_id].pop(msg_id, None)
+                        else:
+                            logger.error(
+                                f"TelegramBadRequest while deleting message {msg_id}: {e}"
+                            )
+                    except Exception as e:
+                        logger.error(f"Failed to delete message {msg_id}: {e}")
+
+            except Exception as e:
+                logger.error(f"Error deleting messages: {e}")
 
             return response
 
