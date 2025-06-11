@@ -72,7 +72,6 @@ message_history = MessageHistory()
 
 class MessageCleanerMiddleware(BaseMiddleware):
     async def track_bot_response(self, chat_id: int, message: Message) -> None:
-        """Track bot responses"""
         if message and message.message_id:
             message_history.add_message(chat_id, message.message_id)
             if message.text:
@@ -94,23 +93,39 @@ class MessageCleanerMiddleware(BaseMiddleware):
             # Track user message
             message_history.add_message(chat_id, event.message_id)
 
-            # Store original send_message
+            # Store original methods
             original_send_message = bot.send_message
+            original_answer = event.answer
+            original_reply = event.reply
 
-            # Create wrapper for bot.send_message
+            # Create wrappers
             async def wrapped_send_message(*args, **kwargs) -> Message:
                 message = await original_send_message(*args, **kwargs)
                 await self.track_bot_response(chat_id, message)
                 return message
 
-            # Replace bot's send_message with wrapped version
+            async def wrapped_answer(*args, **kwargs) -> Message:
+                message = await original_answer(*args, **kwargs)
+                await self.track_bot_response(chat_id, message)
+                return message
+
+            async def wrapped_reply(*args, **kwargs) -> Message:
+                message = await original_reply(*args, **kwargs)
+                await self.track_bot_response(chat_id, message)
+                return message
+
+            # Patch methods
             bot.send_message = wrapped_send_message
+            event.answer = wrapped_answer
+            event.reply = wrapped_reply
 
             # Process message
             response = await handler(event, data)
 
-            # Restore original send_message
+            # Restore original methods
             bot.send_message = original_send_message
+            event.answer = original_answer
+            event.reply = original_reply
 
             # Track response if it's a Message
             if isinstance(response, Message):
