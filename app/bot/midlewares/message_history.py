@@ -71,8 +71,8 @@ message_history = MessageHistory()
 
 
 class MessageCleanerMiddleware(BaseMiddleware):
-    async def track_message(self, chat_id: int, message: Message) -> None:
-        """Track bot message"""
+    async def track_bot_response(self, chat_id: int, message: Message) -> None:
+        """Track bot responses"""
         if message and message.message_id:
             message_history.add_message(chat_id, message.message_id)
             if message.text:
@@ -89,45 +89,32 @@ class MessageCleanerMiddleware(BaseMiddleware):
     ) -> Any:
         try:
             chat_id = event.chat.id
-            bot: Bot = event.bot
+            bot: Bot = data["bot"]
 
             # Track user message
             message_history.add_message(chat_id, event.message_id)
 
-            # Patch all message sending methods
-            original_methods = {
-                "send_message": bot.send_message,
-                "reply": event.reply,
-                "answer": event.answer,
-            }
+            # Store original send_message
+            original_send_message = bot.send_message
 
-            async def track_and_call(method: Callable, *args, **kwargs) -> Message:
-                result = await method(*args, **kwargs)
-                await self.track_message(chat_id, result)
-                return result
+            # Create wrapper for bot.send_message
+            async def wrapped_send_message(*args, **kwargs) -> Message:
+                message = await original_send_message(*args, **kwargs)
+                await self.track_bot_response(chat_id, message)
+                return message
 
-            # Replace methods with tracked versions
-            bot.send_message = lambda *args, **kwargs: track_and_call(
-                original_methods["send_message"], *args, **kwargs
-            )
-            event.reply = lambda *args, **kwargs: track_and_call(
-                original_methods["reply"], *args, **kwargs
-            )
-            event.answer = lambda *args, **kwargs: track_and_call(
-                original_methods["answer"], *args, **kwargs
-            )
+            # Replace bot's send_message with wrapped version
+            bot.send_message = wrapped_send_message
 
             # Process message
             response = await handler(event, data)
 
-            # Restore original methods
-            bot.send_message = original_methods["send_message"]
-            event.reply = original_methods["reply"]
-            event.answer = original_methods["answer"]
+            # Restore original send_message
+            bot.send_message = original_send_message
 
-            # Track response if it's a message
+            # Track response if it's a Message
             if isinstance(response, Message):
-                await self.track_message(chat_id, response)
+                await self.track_bot_response(chat_id, response)
 
             # Delete old messages
             try:
@@ -137,7 +124,6 @@ class MessageCleanerMiddleware(BaseMiddleware):
                 for msg_id in messages_to_delete:
                     try:
                         await bot.delete_message(chat_id=chat_id, message_id=msg_id)
-                        logger.debug(f"Successfully deleted message {msg_id}")
                         if chat_id in message_history.messages:
                             message_history.messages[chat_id].pop(msg_id, None)
                     except TelegramBadRequest as e:
@@ -157,5 +143,7 @@ class MessageCleanerMiddleware(BaseMiddleware):
             return response
 
         except Exception as e:
-            logger.error(f"Global error in MessageCleanerMiddleware: {e}")
+            logger.error(
+                f"Global error in MessageCleanerMiddleware: {e}", exc_info=True
+            )
             return await handler(event, data)
