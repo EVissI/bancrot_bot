@@ -6,6 +6,7 @@ from loguru import logger
 from app.bot.common.utils import create_bitrix_deal
 from app.bot.keyboards.inline_kb import check_credit
 from app.bot.keyboards.markup_kb import MainKeyboard
+from app.bot.midlewares.message_history import track_bot_message
 from app.db.dao import UserDAO
 from app.db.schemas import TelegramIDModel
 from app.db.database import async_session_maker
@@ -14,7 +15,8 @@ credits_router = Router()
 
 @credits_router.message(F.text == MainKeyboard.get_user_kb_texts().get('check_credit'))
 async def process_check_credit(message:Message):
-    await message.answer('Кредитная история',reply_markup=check_credit())
+    msg = await message.answer('Кредитная история',reply_markup=check_credit())
+    track_bot_message(message.chat.id, msg)
 
 @credits_router.callback_query(F.data == 'dispute_credit')
 async def process_dispute_credit(callback:CallbackQuery):

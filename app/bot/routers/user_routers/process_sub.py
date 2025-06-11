@@ -10,6 +10,7 @@ from loguru import logger
 
 from app.bot.common.utils import create_bitrix_deal
 from app.bot.keyboards.inline_kb import get_subscription_keyboard
+from app.bot.midlewares.message_history import track_bot_message
 from app.db.database import async_session_maker
 from app.db.schemas import PromocodeFilterModel, UserFilterModel,UserModel,TelegramIDModel, UserPromocodeFilterModel, UserPromocodeModel
 from app.db.dao import PromocodeDAO, UserDAO, UserPromocodeDAO
@@ -79,6 +80,7 @@ async def process_succesful_payment(message:Message):
     await message.reply(
         msg, reply_markup=MainKeyboard.build_main_kb(message.from_user.id)
     )
+    track_bot_message(message.chat.id, msg)
     logger.info(f"Получен платеж от {message.from_user.id}")
 
 class EnterPromo(StatesGroup):
@@ -99,8 +101,9 @@ async def process_invoice(
 async def process_back(
     message:Message, state:FSMContext
 ):
-    await message.answer('Для работы бота нужно, либо оплатить подписку, либо активировать промокод',reply_markup=get_subscription_keyboard())
+    msg = await message.answer('Для работы бота нужно, либо оплатить подписку, либо активировать промокод',reply_markup=get_subscription_keyboard())
     await state.clear()
+    track_bot_message(message.chat.id, msg)
 
 @payment_router.message(F.text, StateFilter(EnterPromo.promo))
 async def process_promo_code(
@@ -201,5 +204,6 @@ async def process_promo_code(
     await message.reply(
         msg, reply_markup=MainKeyboard.build_main_kb(message.from_user.id)
     )
+    track_bot_message(message.chat.id, msg)
     await state.clear()
 

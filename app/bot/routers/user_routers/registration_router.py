@@ -3,10 +3,11 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import StateFilter
 from aiogram.fsm.state import State, StatesGroup
-from app.bot.common.msg import messages as  msg
+from app.bot.common.msg import messages
 from loguru import logger
 
 from app.bot.keyboards.inline_kb import get_subscription_keyboard, get_consent_keyboard
+from app.bot.midlewares.message_history import track_bot_message
 from app.db.database import async_session_maker
 from app.db.dao import UserDAO
 from app.db.schemas import TelegramIDModel, UserModel
@@ -28,9 +29,10 @@ class Registration(StatesGroup):
 @registration_router.callback_query(F.data.startswith("im_ready_to_req"))
 async def start_req(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
-    await callback.message.answer(
-        msg.get("privacy"), reply_markup=get_consent_keyboard(), parse_mode="Markdown"
+    msg = await callback.message.answer(
+        messages.get("privacy"), reply_markup=get_consent_keyboard(), parse_mode="Markdown"
     )
+    track_bot_message(callback.chat.id, msg)
     await state.set_state(Registration.consent)
 
 
@@ -61,9 +63,10 @@ async def accept_privacy(callback: CallbackQuery, state: FSMContext):
 )
 async def process_fio(message: Message, state: FSMContext):
     await state.update_data({"fio": message.text})
-    await message.answer(
+    msg = await message.answer(
         "Приятно познакомиться! Теперь можете написать дату рождения в формате дд.мм.гггг(пример: 29.03.1992)"
     )
+    track_bot_message(message.chat.id, msg)
     await state.set_state(Registration.date_of_brth)
 
 
@@ -71,7 +74,8 @@ async def process_fio(message: Message, state: FSMContext):
     ~F.text.regexp(r"^\s*\S+(\s+\S+){2}\s*$"), StateFilter(Registration.fio)
 )
 async def error_fio(message: Message):
-    await message.answer("Это не похоже на ФИО, попробуйте еще раз")
+    msg= await message.answer("Это не похоже на ФИО, попробуйте еще раз")
+    track_bot_message(message.chat.id, msg)
 
 
 @registration_router.message(
@@ -80,9 +84,10 @@ async def error_fio(message: Message):
 )
 async def process_dot(message: Message, state: FSMContext):
     await state.update_data({"dot": message.text})
-    await message.answer(
+    msg = await message.answer(
         "Теперь пожалуйста, введите регион проживания полностью (например: Удмуртская Республика, Волгоградская область)"
     )
+    track_bot_message(message.chat.id, msg)
     await state.set_state(Registration.region)
 
 
@@ -91,15 +96,17 @@ async def process_dot(message: Message, state: FSMContext):
     StateFilter(Registration.date_of_brth),
 )
 async def error_dot(message: Message, state: FSMContext):
-    await message.answer("Неверный формат ввода")
+    msg = await message.answer("Неверный формат ввода")
+    track_bot_message(message.chat.id, msg)
 
 
 @registration_router.message(F.text, StateFilter(Registration.region))
 async def process_region(message: Message, state: FSMContext):
     await state.update_data({"region": message.text})
-    await message.answer(
+    msg = await message.answer(
         "Остался последний шаг. Eсли вы меняли фамилию, введите вашу старую фамилию. Если нет, поставьте -"
     )
+    track_bot_message(message.chat.id, msg)
     await state.set_state(Registration.old_last_name)
 
 
@@ -139,10 +146,11 @@ async def process_old_last_name(message: Message, state: FSMContext):
                 )
             else:
                 await UserDAO.add(session=session, values=user)
-        await message.answer(
+        msg = await message.answer(
             "Отлично,теперь оплатите подписку для дальнейшего пользования ботом",
             reply_markup=get_subscription_keyboard(),
         )
+        track_bot_message(message.chat.id, msg)
     except Exception as e:
         logger.error(f"При добавлении юзера произошла ошибка - {str(e)}")
         await message.answer("Что-то пошло не так")

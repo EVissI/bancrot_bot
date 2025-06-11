@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     BOT_TOKEN: str
     ADMIN_IDS: List[int]
     CHAT_TO_SUB: str
-
+    WORK_CHAT_ID: int
     REG_PROMO_CODE:str = 'TEST'
 
     YO_KASSA_TEL_API_KEY:str
