@@ -42,36 +42,6 @@ async def process_stop(query: CallbackQuery, callback_data:StopBancrData):
             await query.message.delete()
             await query.message.answer('Произошла ошибка на сервере, попробуйте позже')
 
-#         4) Название сделки: ФИО_ТГБОТ (когда нажимают кнопку )
-# Стадия: Оплата подписки 
-# Тип сделки: Постбанкротство
-# Комментарий: Номера ИП которые выдал бот в тг
-        # deal_data = {
-        #     'fields': {
-        #         'TITLE': f'Постабанкроство {fio}',  
-        #         'TYPE_ID': 'SALE',  
-        #         'STAGE_ID': 'NEW',  
-        #         'CATEGORY_ID': '7',  
-        #         'BEGINDATE': datetime.now().strftime('%Y-%m-%dT%H:%M:%S%z'),  
-        #         'CLOSEDATE': (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%dT%H:%M:%S%z'),  # Дата завершения
-        #         'COMMENTS': comment_msg,  
-        #         'OPENED': 'Y',  
-        #         'SOURCE_ID': 'WEB',  
-        #     }
-        # }
-
-        # response = requests.post(f"{settings.BITRIKS_WEBHOOK_URL}crm.deal.add",json=deal_data)
-        # result = response.json()
-
-        # if 'result' in result:
-        #     logger.info(f"Лид успешно создан с ID: {result['result']}")
-        #     await query.message.delete()
-        #     await query.message.answer('Отлично, скоро с вами свяжется наш менеджер')
-        # else:
-        #     logger.info(f"Ошибка при создании лида: {result['error_description']}")
-        #     await query.message.delete()
-        #     await query.message.answer('Произошла ошибка на сервере, попробуйте позже')
-
     except Exception as e:
         logger.error(f'При отправке лида от юзера {query.from_user.id} произошла ошибка - {str(e)}')
         await query.answer('Что-то пошло не так')

@@ -2,7 +2,7 @@
 from sqlalchemy import or_, select
 from sqlalchemy.exc import SQLAlchemyError
 from app.db.base import BaseDAO
-from app.db.models import TelegramUser,Promocode,UserPromocode
+from app.db.models import Delo, EFRSBRecord, TelegramUser,Promocode,UserPromocode
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -14,3 +14,9 @@ class PromocodeDAO(BaseDAO[Promocode]):
 
 class UserPromocodeDAO(BaseDAO[UserPromocode]):
     model = UserPromocode
+
+class EFRSBRecordDAO:
+    model = EFRSBRecord
+
+class DeloEFRSBDAO:
+    model = Delo

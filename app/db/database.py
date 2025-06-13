@@ -18,6 +18,17 @@ from app.config import settings
 engine = create_async_engine(url=str(settings.DB_URL))
 async_session_maker = async_sessionmaker(engine, class_=AsyncSession)
 
+efrsb_engine = create_async_engine(
+    settings.efrsb_database_url,
+    echo=False,
+    pool_pre_ping=True
+)
+
+efrsb_session_maker = async_sessionmaker(
+    efrsb_engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
 
 class Base(AsyncAttrs, DeclarativeBase):
     __abstract__ = True

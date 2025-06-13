@@ -71,3 +71,15 @@ class UserPromocodeFilterModel(BaseModel):
     user_id: Optional[int] = None
     promocode_id: Optional[int] = None
     
+class EFRSBRecordSchema(BaseModel):
+    revision: int
+    fullname: str
+    birthdate: datetime | None
+    birthplace: str
+    address: str
+    inn: str
+    snils: str
+    court_region: str
+    case_number: str
+    decision_date: datetime | None
+    publish_date: datetime
