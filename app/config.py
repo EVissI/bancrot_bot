@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     POSTGRES_USER:str
     POSTGRES_PASSWORD:str
     POSTGRES_DB:str
-    EFRSB_DB_HOST: str = "bankruptcy_db" 
+    EFRSB_DB_HOST: str = "localhost" 
     EFRSB_DB_PORT: str = "5432"
     
     @property
