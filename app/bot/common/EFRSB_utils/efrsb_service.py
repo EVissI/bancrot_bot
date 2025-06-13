@@ -13,7 +13,7 @@ from app.db.dao import EFRSBRecordDAO
 from app.db.models import EFRSBRecord
 from app.db.schemas import EFRSBRecordSchema
 from app.db.dao import DeloEFRSBDAO
-from app.db.database import efrsb_session_maker
+from app.db.database import async_session_maker
 
 logger = logging.getLogger(__name__)
 
@@ -354,7 +354,7 @@ async def find_bankruptcy_by_user(full_name: str, birthdate: str) -> list[dict]:
             datetime.strptime(birthdate, "%d.%m.%Y").date() if birthdate else None
         )
 
-        async with efrsb_session_maker() as session:
+        async with async_session_maker() as session:
             # Создаем SQL запрос
             query = select(EFRSBRecord).where(
                 EFRSBRecord.full_name.ilike(f"%{full_name}%")
