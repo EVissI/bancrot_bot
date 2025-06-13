@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     BITRIKS_WEBHOOK_URL:str
 
     EFRSB_TOKEN:str
-    STEP = 2000
+    STEP:int = 2000
 
     POSTGRES_USER:str
     POSTGRES_PASSWORD:str
