@@ -27,13 +27,18 @@ class Settings(BaseSettings):
     POSTGRES_USER:str
     POSTGRES_PASSWORD:str
     POSTGRES_DB:str
-    EFRSB_DB_HOST: str = "localhost" 
+    EFRSB_DB_HOST: str = "172.17.0.2" 
     EFRSB_DB_PORT: str = "5432"
     
     @property
     def efrsb_database_url(self) -> str:
-        """Формируем URL для подключения к БД ЕФРСБ используя основные креды"""
-        return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.EFRSB_DB_HOST}:{self.EFRSB_DB_PORT}/{self.POSTGRES_DB}"
+        """Формируем URL для подключения к БД ЕФРСБ"""
+        return (
+            f"postgresql+asyncpg://"
+            f"{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@"
+            f"{self.EFRSB_DB_HOST}:{self.EFRSB_DB_PORT}/"
+            f"{self.POSTGRES_DB}"
+        )
     
     model_config = SettingsConfigDict(env_file=".env")
 
