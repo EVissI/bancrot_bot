@@ -61,11 +61,12 @@ def get_balance_keyboard() -> InlineKeyboardMarkup:
         text="Баланс",callback_data=BalanceData(action="balance").pack()
     )
     kb.button(
-        text="Пополнить",callback_data="payment_sub",
+        text="Пополнить", callback_data="payment_sub",
     )
     kb.button(
-        text="Активировать промо",callback_data="promo_code",
+        text="Активировать промо", callback_data="promo_code",
     )
+    kb.adjust(1)
     return kb.as_markup()
 
 def get_consent_keyboard() -> InlineKeyboardMarkup:
