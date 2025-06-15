@@ -8,11 +8,13 @@ from app.bot.keyboards.markup_kb import MainKeyboard
 from app.bot.midlewares.admin_middleware import CheckAdmin
 from app.bot.midlewares.check_sub import CheckSub
 from app.bot.midlewares.check_sub_to_bot import CheckPaidSubscription
+from app.bot.midlewares.message_history import track_bot_message
 from app.bot.routers.user_routers.main_user_router import main_user_router
 from app.bot.routers.user_routers.registration_router import registration_router
 from app.bot.routers.user_routers.process_sub import payment_router
 from app.bot.routers.user_routers.process_stop_butn import stop_router
 from app.bot.routers.user_routers.credit_router import credits_router
+from app.bot.routers.user_routers.balance import balance_router
 from app.bot.routers.admin_router.main_admin_router import admin_router
 from app.config import settings
 from loguru import logger
@@ -42,7 +44,7 @@ main_router.include_router(payment_router)
 main_router.include_router(stop_router)
 main_router.include_router(main_user_router)
 main_router.include_router(credits_router)
-
+main_router.include_router(balance_router)
 main_router.include_router(admin_router)
 
 
@@ -61,7 +63,8 @@ async def cmd_start(message: Message):
 
 @main_router.message(F.text == '/test_sub')
 async def check_sub(message:Message):
-    await message.answer('Пожалуйста, подпишитесь на наш канал, чтобы продолжить.', reply_markup=get_subscription_on_chanel_keyboard())
+    msg = await message.answer('Пожалуйста, подпишитесь на наш канал, чтобы продолжить.', reply_markup=get_subscription_on_chanel_keyboard())
+    track_bot_message(message.chat.id, msg)
 
 @main_router.message(F.text == '/test_payment')
 async def test_payment(message:Message):

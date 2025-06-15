@@ -1,7 +1,8 @@
-﻿import asyncio
+import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from app.bot.midlewares.message_history import MessageCleanerMiddleware
 from app.bot.routers.main_router import main_router
-from app.bot.sheldured_task.send_notification import check_db_and_send_notification
+from app.bot.sheldured_task.send_notification import check_db_and_send_notification, second_retry_tasks_launch, last_retry_tasks_launch
 from app.config import setup_logger
 
 setup_logger("bot")
@@ -48,10 +49,14 @@ def start_scheduler():
     """
     scheduler = AsyncIOScheduler()
     scheduler.add_job(check_db_and_send_notification, "cron", day_of_week="mon", hour=0, minute=0)
+    scheduler.add_job(second_retry_tasks_launch, "cron", day_of_week="tue", hour=0, minute=0)
+    scheduler.add_job(last_retry_tasks_launch, "cron", day_of_week="wed", hour=0, minute=0)
     scheduler.start()
     logger.info("Планировщик задач запущен.")
 
 async def main():
+    # регистрация middleware
+    dp.message.middleware(MessageCleanerMiddleware())
     # регистрация роутеров
     dp.include_router(main_router)
 

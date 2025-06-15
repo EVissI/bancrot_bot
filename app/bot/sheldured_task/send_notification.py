@@ -2,6 +2,7 @@ import time
 from loguru import logger
 import json
 
+
 import requests
 from app.bot.keyboards.inline_kb import stop
 from app.db.dao import UserDAO
@@ -10,6 +11,7 @@ from app.db.schemas import UserFilterModel,TelegramIDModel
 from app.config import bot
 from app.bot.common.msg import messages
 from pathlib import Path
+
 
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent.parent.parent
@@ -124,8 +126,10 @@ async def last_retry_tasks_launch():
     await retry_tasks_launch(last=True)
 
 
+
 async def check_db_and_send_notification():
     """
+
     Проверка из базы ФССП.
     """
     logger.info("Запуск задачи по проверке из базы ФССП.")
@@ -136,9 +140,10 @@ async def check_db_and_send_notification():
     except FileNotFoundError:
         retry_tasks = []
 
+
     async with async_session_maker() as session:
-        # Получаем все записи из базы данных
         db_records = await UserDAO.find_all(session, filters=UserFilterModel())
+
         db_records = list(db_records)
         cnt = 0
         full = len(db_records)
@@ -157,17 +162,20 @@ async def check_db_and_send_notification():
 
 async def check_user_and_send_notification(telegram_id: int):
     """
-    Сравнивает запись одного пользователя из базы данных с записями в JSON.
+    Проверяет пользователя из базы и уведомляет, если найдено банкротство через EFRSB.
     """
     logger.info(f"Запуск задачи проверки для пользователя с telegram_id: {telegram_id}")
+
     
+
+
     async with async_session_maker() as session:
-        # Получаем запись пользователя из базы данных
-        db_record = await UserDAO.find_one_or_none(session,filters=TelegramIDModel(telegram_id=telegram_id))
-        
+        db_record = await UserDAO.find_one_or_none(session, filters=TelegramIDModel(telegram_id=telegram_id))
+
         if not db_record:
             logger.info(f"Пользователь с telegram_id {telegram_id} не найден в базе данных.")
             return
+
         
         try:
             await check_user(db_record)
@@ -178,3 +186,4 @@ async def check_user_and_send_notification(telegram_id: int):
                                 text='База ФССП временно недоступна. Мы предоставим информацию позже.'
                             )
     
+
