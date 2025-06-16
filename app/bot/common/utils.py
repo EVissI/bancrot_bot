@@ -71,7 +71,7 @@ async def bitrix_add_comment_to_deal(deal_id: str, comment: str) -> bool:
     :param comment: Текст комментария
     :return: True если успешно, иначе False
     """
-    url = f"{settings.BITRIX_WEBHOOK_URL}/crm.timeline.comment.add.json"
+    url = f"{settings.BITRIKS_WEBHOOK_URL}/crm.timeline.comment.add.json"
     payload = {
         "fields": {
             "ENTITY_ID": deal_id,

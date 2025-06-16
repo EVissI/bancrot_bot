@@ -1,4 +1,4 @@
-import time
+﻿import time
 from loguru import logger
 import json
 
@@ -165,9 +165,6 @@ async def check_user_and_send_notification(telegram_id: int):
     Проверяет пользователя из базы и уведомляет, если найдено банкротство через EFRSB.
     """
     logger.info(f"Запуск задачи проверки для пользователя с telegram_id: {telegram_id}")
-
-    
-
 
     async with async_session_maker() as session:
         db_record = await UserDAO.find_one_or_none(session, filters=TelegramIDModel(telegram_id=telegram_id))
