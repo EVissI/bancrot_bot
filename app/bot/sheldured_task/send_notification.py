@@ -66,7 +66,7 @@ async def check_user(db_record):
     else:
         raise Exception(js_data['error'])
 
-    
+    print(js_data)
     for person in js_data['result']:
         sum_to_pay = int(person['payment_available'])
         if sum_to_pay > 0:
