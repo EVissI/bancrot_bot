@@ -16,6 +16,9 @@ class MessageHistory:
         self.ip_result_messages: Dict[int, list[int]] = (
             {}
         )  # chat_id -> list of message_ids
+        self.ignored_messages: Dict[int, list[int]] = (
+            {}
+        )  # chat_id -> list of message_ids to ignore
 
     def add_message(self, user_id: int, message_id: int):
         if user_id not in self.messages:
@@ -30,6 +33,12 @@ class MessageHistory:
             self.ip_result_messages[user_id] = []
         self.ip_result_messages[user_id].append(message_id)
 
+    def ignore_message(self, chat_id: int, message_id: int):
+        """Add message to ignore list - it won't be deleted"""
+        if chat_id not in self.ignored_messages:
+            self.ignored_messages[chat_id] = []
+        self.ignored_messages[chat_id].append(message_id)
+
     def get_messages_to_delete(self, user_id: int) -> list[int]:
         if user_id not in self.messages:
             return []
@@ -39,8 +48,14 @@ class MessageHistory:
         latest_message = None
         latest_time = datetime.min
 
-        # Находим последнее сообщение дня
         for msg_id, timestamp in self.messages[user_id].items():
+            # Skip ignored messages
+            if (
+                user_id in self.ignored_messages
+                and msg_id in self.ignored_messages[user_id]
+            ):
+                continue
+
             if timestamp.date() == current_date.date() and timestamp > latest_time:
                 if latest_message:
                     to_delete.append(latest_message)
@@ -70,14 +85,10 @@ class MessageHistory:
 message_history = MessageHistory()
 
 
-def track_bot_message(chat_id: int, message: Message):
+def track_bot_message(chat_id: int, message: Message, ignore: bool = False):
     message_history.add_message(chat_id, message.message_id)
-    if message.text:
-        if "Добро пожаловать" in message.text:
-            message_history.set_welcome_message(chat_id, message.message_id)
-        elif "Обнаружено исполнительное производство" in message.text:
-            message_history.add_ip_result(chat_id, message.message_id)
-
+    if ignore:
+        message_history.ignore_message(chat_id, message.message_id)
 
 class MessageCleanerMiddleware(BaseMiddleware):
     async def __call__(
