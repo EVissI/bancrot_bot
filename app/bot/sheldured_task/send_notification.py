@@ -66,7 +66,6 @@ async def check_user(db_record):
     else:
         raise Exception(js_data['error'])
 
-    print(js_data)
     for person in js_data['result']:
         sum_to_pay = int(person['payment_available'])
         if sum_to_pay > 0:
@@ -189,4 +188,3 @@ async def check_user_and_send_notification(telegram_id: int):
                                 text='База ФССП временно недоступна. Мы предоставим информацию позже.'
                             )
     
-
