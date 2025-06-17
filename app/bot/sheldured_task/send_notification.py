@@ -30,7 +30,7 @@ def scan_sum_to_pay(data):
 
 
 async def check_user(db_record):
-    with open(db_path, 'r', encoding='utf-8') as file:
+    with open(api_path, 'r', encoding='utf-8') as file:
         api_key = file.read()
 
     params = {
