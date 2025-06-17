@@ -32,8 +32,9 @@ class Referal(StatesGroup):
 
 @main_user_router.message(F.text == MainKeyboard.get_user_kb_texts().get("check_isp"))
 async def process_check_isp(message: Message):
+    msg = await message.answer("Производится проверка...")
     await check_user_and_send_notification(message.from_user.id)
-
+    msg.delete()
 
 def is_valid_phone(phone: str) -> bool:
     return bool(re.fullmatch(r"\+?\d{10,15}", phone.strip()))
