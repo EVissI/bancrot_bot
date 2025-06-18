@@ -17,6 +17,7 @@ class UserModel(TelegramIDModel):
     username: Optional[str]
     first_name: str
     last_name:Optional[str]
+    phone: Optional[str]
     user_enter_first_name: Optional[str]
     user_enter_last_name: Optional[str]
     user_enter_otchestvo: Optional[str]
@@ -31,6 +32,7 @@ class UserFilterModel(BaseModel):
     username: Optional[str] = None
     first_name: str = None
     last_name:Optional[str] = None
+    phone: Optional[str] = None
     user_enter_first_name: Optional[str] = None
     user_enter_last_name: Optional[str] = None
     user_enter_otchestvo: Optional[str] = None

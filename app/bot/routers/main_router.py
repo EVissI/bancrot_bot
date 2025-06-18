@@ -7,7 +7,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 from app.bot.common.utils import bitrix_add_comment_to_deal
 from app.bot.keyboards.inline_kb import get_subscription_on_chanel_keyboard, im_ready,get_subscription_keyboard
-from app.bot.keyboards.markup_kb import MainKeyboard
+from app.bot.keyboards.markup_kb import MainKeyboard, get_agreement_keyboard
 from app.bot.midlewares.admin_middleware import CheckAdmin
 from app.bot.midlewares.check_sub import CheckSub
 from app.bot.midlewares.check_sub_to_bot import CheckPaidSubscription
@@ -91,3 +91,10 @@ async def process_referal_comment(message: Message, state: FSMContext):
     track_bot_message(message.chat.id, msg)
     await state.clear()
 
+@main_user_router.message(F.text == "123123123123123123")
+async def test_message(message: Message):
+    """
+    Тестовая функция для проверки работы бота.
+    """
+    msg = await message.answer("Тестовое сообщение успешно отправлено!",reply_markup=get_agreement_keyboard())
+    track_bot_message(message.chat.id, msg)

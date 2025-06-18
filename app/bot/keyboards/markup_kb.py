@@ -1,9 +1,17 @@
 ﻿from typing import Dict
-from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import WebAppInfo, ReplyKeyboardMarkup, ReplyKeyboardRemove,KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from loguru import logger
 from app.config import settings
 
+def get_agreement_keyboard():
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="Ознакомиться с соглашением", web_app=WebAppInfo(url="https://www.google.com/search?q=cats&newwindow=1&sca_esv=c00251c694cd13aa&udm=2&biw=1920&bih=919&sxsrf=AE3TifOG8UlKCXfBvQWcPsww6_dQm5-phQ%3A1750252570151&ei=GrxSaNT-CIDhvr0P7JDQsAY&ved=0ahUKEwjU89f1hvuNAxWAsK8BHWwIFGYQ4dUDCBE&uact=5&oq=cats&gs_lp=EgNpbWciBGNhdHMyChAAGIAEGEMYigUyChAAGIAEGEMYigUyDRAAGIAEGLEDGEMYigUyCxAAGIAEGLEDGIMBMgoQABiABBhDGIoFMggQABiABBixAzIIEAAYgAQYsQMyCxAAGIAEGLEDGIMBMgUQABiABDIOEAAYgAQYsQMYgwEYigVI9htQAFiAGnAFeACQAQGYAeEDoAH-HKoBAzQtOLgBA8gBAPgBAZgCC6AC1xmoAgCYAwCSBwU0LjQtN6AHoSmyBwM0LTe4B8cZwgcGMC4xLjEwyAcp&sclient=img"))],
+            [KeyboardButton(text="Поделиться номером", request_contact=True)],
+        ],
+        resize_keyboard=True,
+    )
 
 class BackKeyboard:
     __button_text = "Назад"

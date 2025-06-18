@@ -7,6 +7,7 @@ from app.bot.common.msg import messages
 from loguru import logger
 
 from app.bot.keyboards.inline_kb import get_subscription_keyboard, get_consent_keyboard
+from app.bot.keyboards.markup_kb import get_agreement_keyboard
 from app.bot.midlewares.message_history import track_bot_message
 from app.db.database import async_session_maker
 from app.db.dao import UserDAO
@@ -17,7 +18,7 @@ registration_router = Router()
 
 
 class Registration(StatesGroup):
-    consent = State()  # New state for privacy consent
+    phone = State()
     fio = State()
     date_of_brth = State()
     region = State()
@@ -30,31 +31,20 @@ class Registration(StatesGroup):
 async def start_req(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
     msg = await callback.message.answer(
-        messages.get("privacy"), reply_markup=get_consent_keyboard(), parse_mode="Markdown"
+        "Перед использованием бота ознакомьтесь с соглашением по кнопке ниже. Если вы согласны, поделитесь номером телефона.",
+        reply_markup=get_agreement_keyboard()
     )
     track_bot_message(callback.chat.id, msg)
-    await state.set_state(Registration.consent)
+    await state.set_state(Registration.phone)
 
 
-@registration_router.callback_query(
-    F.data == "decline_privacy", StateFilter(Registration.consent)
-)
-async def decline_privacy(callback: CallbackQuery, state: FSMContext):
-    await callback.message.edit_text(
-        "❌ Без согласия на обработку персональных данных использование бота невозможно. "
-        "Если передумаете, начните регистрацию заново командой /start"
-    )
-    await state.clear()
-
-
-@registration_router.callback_query(
-    F.data == "accept_privacy", StateFilter(Registration.consent)
-)
-async def accept_privacy(callback: CallbackQuery, state: FSMContext):
-    await callback.message.delete()
-    await callback.message.answer(
-        "Прекрасно, давай знакомиться! Напиши свое ФИО как в паспорте"
-    )
+@registration_router.message(F.contact, StateFilter(Registration.phone))
+async def process_phone(message: Message, state: FSMContext):
+    await state.update_data({"phone": message.contact.phone_number})
+    msg = await message.answer(
+        "Прекрасно, давай знакомиться! Напиши свое ФИО как в паспорте",
+        reply_markup=None)
+    track_bot_message(message.chat.id, msg)
     await state.set_state(Registration.fio)
 
 
@@ -129,6 +119,7 @@ async def process_old_last_name(message: Message, state: FSMContext):
                 username=message.from_user.username,
                 first_name=message.from_user.first_name,
                 last_name=message.from_user.last_name,
+                phone=state_data.get("phone"),
                 user_enter_first_name=first_name,
                 user_enter_last_name=last_name,
                 user_enter_otchestvo=otchestvo,

@@ -21,6 +21,7 @@ class TelegramUser(Base):
     username: Mapped[Optional[str]] = mapped_column(String, default=None)
     first_name: Mapped[str] = mapped_column(String, default=None, nullable=False)
     last_name: Mapped[Optional[str]] = mapped_column(String, default=None)
+    phone: Mapped[Optional[str]] = mapped_column(String, default=None)
     user_enter_first_name: Mapped[Optional[str]] = mapped_column(String, default=None)
     user_enter_last_name: Mapped[Optional[str]] = mapped_column(String, default=None)
     user_enter_otchestvo: Mapped[Optional[str]] = mapped_column(String, default=None)
