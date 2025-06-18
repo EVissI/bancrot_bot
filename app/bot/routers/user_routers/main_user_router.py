@@ -118,6 +118,7 @@ async def process_referal(message: Message, state: FSMContext):
                 f"<b>Рекомендатель:</b> {referrer_info}\n"
                 f"<b>Telegram рекомендателя:</b> {telegram_link}"
             )
+            logger.info(result)
             if result:
                 kb = InlineKeyboardMarkup(
                     inline_keyboard=[

@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from app.bot.midlewares.message_history import MessageCleanerMiddleware
 from app.bot.routers.main_router import main_router
@@ -49,8 +49,8 @@ def start_scheduler():
     """
     scheduler = AsyncIOScheduler()
     scheduler.add_job(check_db_and_send_notification, "cron", day_of_week="mon", hour=0, minute=0)
-    scheduler.add_job(second_retry_tasks_launch, "cron", day_of_week="tue", hour=0, minute=0)
-    scheduler.add_job(last_retry_tasks_launch, "cron", day_of_week="wed", hour=0, minute=0)
+    scheduler.add_job(second_retry_tasks_launch, "cron", day_of_week="mon", hour=1, minute=0)
+    scheduler.add_job(last_retry_tasks_launch, "cron", day_of_week="tue", hour=0, minute=0)
     scheduler.start()
     logger.info("Планировщик задач запущен.")
 
