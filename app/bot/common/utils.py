@@ -79,7 +79,20 @@ async def bitrix_add_comment_to_deal(deal_id: str, comment: str) -> bool:
             "COMMENT": comment,
         }
     }
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=payload) as resp:
-            data = await resp.json()
-            return "result" in data and data["result"] is not None
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, json=payload) as resp:
+                data = await resp.json()
+                if "result" in data and data["result"] is not None:
+                    logger.info(f"Комментарий успешно добавлен к сделке {deal_id}")
+                    return True
+                else:
+                    logger.error(
+                        f"Ошибка при добавлении комментария к сделке {deal_id}: {data}"
+                    )
+                    return False
+    except Exception as e:
+        logger.error(
+            f"Исключение при добавлении комментария к сделке {deal_id}: {str(e)}"
+        )
+        return False
