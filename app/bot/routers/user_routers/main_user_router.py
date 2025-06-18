@@ -145,29 +145,5 @@ async def process_referal(message: Message, state: FSMContext):
     await state.clear()
 
 
-class ReferalComment(StatesGroup):
-    waiting_comment = State()
 
 
-@main_user_router.message(F.text.startswith("/start referal_comment_"))
-async def start_referal_comment(message: Message, state: FSMContext):
-    deal_id = message.text.split("_")[-1]
-    await state.update_data(deal_id=deal_id)
-    msg = await message.answer("Введите комментарий для клиента:")
-    track_bot_message(message.chat.id, msg)
-    await state.set_state(ReferalComment.waiting_comment)
-
-
-@main_user_router.message(StateFilter(ReferalComment.waiting_comment))
-async def process_referal_comment(message: Message, state: FSMContext):
-    data = await state.get_data()
-    deal_id = data.get("deal_id")
-    comment = message.text
-
-    success = await bitrix_add_comment_to_deal(deal_id, comment)
-    if success:
-        msg = await message.answer("Комментарий отправлен в Bitrix24!")
-    else:
-        msg = await message.answer("Ошибка при отправке комментария в Bitrix24.")
-    track_bot_message(message.chat.id, msg)
-    await state.clear()
