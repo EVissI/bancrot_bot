@@ -1,7 +1,7 @@
 ﻿import time
 from loguru import logger
 import json
-
+import asyncio
 import requests
 from app.bot.keyboards.inline_kb import referal_keyboard, stop
 from app.bot.midlewares.message_history import track_bot_message
@@ -42,7 +42,6 @@ async def check_user(db_record):
         'dob': db_record.data_of_birth,
         'key': api_key
     }
-    wait = 60
     for _ in range(3):
         try:
             resp = requests.get(url, params, timeout=10)
@@ -50,14 +49,12 @@ async def check_user(db_record):
             js_data = resp.json()
             if js_data.get('done'): break
             if js_data['error'] == 'fssprus.ru is temporarily unavailable, please try again later':
-                wait *= 2
-                time.sleep(wait)
+                asyncio.sleep(60 * 2)
             elif js_data['error'] == 'Day limit of requests exceeded':
                 logger.info('Дневной лимит запроса исчерпан!\n!Загрузка поставлено в паузу на 24 часа!')
-                time.sleep(86400)
+                asyncio.sleep(86400)
             else:
-                wait *= 5
-                time.sleep(wait)
+                asyncio.sleep(60 * 5)
                 
         except Exception as e:
             logger.error(f'Request error: {e}')
