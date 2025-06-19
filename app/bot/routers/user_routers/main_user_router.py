@@ -26,7 +26,7 @@ main_user_router = Router()
 
 
 class Referal(StatesGroup):
-    title = State()
+    fio = State()
     phone = State()
 
 
@@ -47,13 +47,13 @@ def is_valid_fio(fio: str) -> bool:
 @main_user_router.message(F.text == MainKeyboard.get_user_kb_texts().get("referal"))
 async def process_referal(message: Message, state: FSMContext):
     msg = await message.answer(
-        "Введите ваше ФИО и номер телефона, для дальнейшей связи с вами"
+        "Введите ваше ФИО человека которому вы хотите помочь"
     )
     track_bot_message(message.chat.id, msg)
-    await state.set_state(Referal.title)
+    await state.set_state(Referal.fio)
 
 
-@main_user_router.message(F.text, StateFilter(Referal.title))
+@main_user_router.message(F.text, StateFilter(Referal.fio))
 async def process_referal_title(message: Message, state: FSMContext):
     if not is_valid_fio(message.text):
         msg = await message.answer(
@@ -61,9 +61,9 @@ async def process_referal_title(message: Message, state: FSMContext):
         )
         track_bot_message(message.chat.id, msg)
         return
-    await state.update_data({"title": message.text})
+    await state.update_data({"fio": message.text})
     msg = await message.answer(
-        "Введите ФИО и номер телефона человека, которому нужна помощь в банкротстве (через запятую)"
+        "Введите Его номер телефона в формате: +79991234567 или 89991234567"
     )
     track_bot_message(message.chat.id, msg)
     await state.set_state(Referal.phone)
@@ -72,16 +72,14 @@ async def process_referal_title(message: Message, state: FSMContext):
 @main_user_router.message(F.text, StateFilter(Referal.phone))
 async def process_referal(message: Message, state: FSMContext):
     data = await state.get_data()
-    referrer_info = data.get("title")
-    parts = [p.strip() for p in message.text.split(",")]
-    if len(parts) < 2 or not is_valid_fio(parts[0]) or not is_valid_phone(parts[1]):
+    if not is_valid_phone(message.text):
         msg = await message.answer(
-            "Пожалуйста, введите ФИО и номер телефона через запятую, например:\nИванов Иван Иванович, +79991234567"
+            "Пожалуйста, введите корректный номер телефона в формате: +79991234567 или 89991234567"
         )
         track_bot_message(message.chat.id, msg)
         return
-
-    recommended_fio, recommended_phone = parts[0], parts[1]
+    recommended_fio = data.get("fio") 
+    recommended_phone = message.text.strip()
 
     async with async_session_maker() as session:
         user = await UserDAO.find_one_or_none(
@@ -89,6 +87,11 @@ async def process_referal(message: Message, state: FSMContext):
         )
 
         if user:
+            referrer_fio = (
+                f"{user.user_enter_last_name} {user.user_enter_first_name} "
+                f"{user.user_enter_otchestvo}" if user.user_enter_otchestvo else
+                f"{user.user_enter_last_name} {user.user_enter_first_name}"
+            )
             deal_title = f"{recommended_phone}_{user.user_enter_first_name}_БФЛ_ТГБОТ"
             telegram_link = (
                 f"https://t.me/{user.username}"
@@ -96,7 +99,7 @@ async def process_referal(message: Message, state: FSMContext):
                 else f"tg://user?id={user.telegram_id}"
             )
             comment = (
-                f"Рекомендация от: {referrer_info}\n"
+                f"Рекомендация от: {referrer_fio}\n"
                 f"Телеграмм рекомендующего: {telegram_link}\n"
                 f"Рекомендуемый: {recommended_fio}, {recommended_phone}"
             )
@@ -115,7 +118,7 @@ async def process_referal(message: Message, state: FSMContext):
                 "🆕 <b>Новая заявка: Рекомендация друга (БФЛ)</b>\n"
                 f"<b>Рекомендуемый:</b> {recommended_fio}\n"
                 f"<b>Телефон:</b> {recommended_phone}\n"
-                f"<b>Рекомендатель:</b> {referrer_info}\n"
+                f"<b>Рекомендатель:</b> {referrer_fio}\n"
                 f"<b>Telegram рекомендателя:</b> {telegram_link}"
             )
             logger.info(result)
