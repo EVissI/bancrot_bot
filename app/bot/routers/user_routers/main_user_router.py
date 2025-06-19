@@ -55,10 +55,12 @@ async def process_referal(message: Message, state: FSMContext):
 
 @main_user_router.callback_query(F.data == "referal")
 async def process_referal_query(query: CallbackQuery, state: FSMContext):
+    await query.answer()
+    await query.message.delete()
     msg = await query.message.answer(
         "Введите ФИО человека которому вы хотите помочь"
     )
-    track_bot_message(query.chat.id, msg)
+    track_bot_message(query.message.chat.id, msg)
     await state.set_state(Referal.fio)
 
 @main_user_router.message(F.text, StateFilter(Referal.fio))
