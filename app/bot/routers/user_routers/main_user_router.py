@@ -39,7 +39,7 @@ async def process_check_isp(message: Message):
             session, TelegramIDModel(telegram_id=message.from_user.id)
         )
         if not user.can_use_fccp:
-            msg = await message.message.answer(messages.get('second_use_fccp_module'),reply_markup=referal_keyboard())
+            msg = await message.answer(messages.get('second_use_fccp_module'),reply_markup=referal_keyboard())
             track_bot_message(message.from_user.id, msg)
             return
         msg = await message.answer("Производится проверка...")
