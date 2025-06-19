@@ -20,10 +20,6 @@ async def process_stop(query: CallbackQuery, callback_data:StopBancrData):
         async with async_session_maker() as session:
             user_from_db = await UserDAO.find_one_or_none(session,TelegramIDModel(telegram_id=query.from_user.id))
 
-        if not user_from_db.can_use_fccp:
-            msg = await query.message.answer(messages.get('second_use_fccp_module'),reply_markup=referal_keyboard())
-            track_bot_message(query.from_user.id, msg)
-            return
         if user_from_db.username:
             telegram_link = f"https://t.me/{user_from_db.username}"
         else:
@@ -44,10 +40,6 @@ async def process_stop(query: CallbackQuery, callback_data:StopBancrData):
             await query.message.delete()
             msg = await query.message.answer('Отлично, скоро с вами свяжется наш менеджер')
             track_bot_message(query.from_user.id, msg)
-            async with async_session_maker() as session:
-                user_from_db.can_use_fccp = False
-                await UserDAO.update(session, TelegramIDModel(telegram_id=query.from_user.id),
-                                      UserFilterModel.model_validate(user_from_db.to_dict()))
         else:
             logger.error(f"Ошибка при создании сделки: {result}")
             await query.message.delete()
