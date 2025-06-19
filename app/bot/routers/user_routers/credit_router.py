@@ -10,7 +10,7 @@ from app.bot.midlewares.message_history import track_bot_message
 from app.db.dao import UserDAO
 from app.db.schemas import TelegramIDModel
 from app.db.database import async_session_maker
-
+from app.config import settings, bot
 credits_router = Router()
 
 @credits_router.message(F.text == MainKeyboard.get_user_kb_texts().get('check_credit'))
@@ -46,6 +46,12 @@ async def process_dispute_credit(callback:CallbackQuery):
 → Вы получите вознаграждение
 """
         await callback.message.answer(text, reply_markup=referal_keyboard())
+        track_bot_message(callback.from_user.id, callback.message)
+
+        await bot.send_message(
+            chat_id=settings.WORK_CHAT_ID,
+            text=f"Пользователь {fio} ({telegram_link}) хочет оспорить кредитную историю",
+        )
     else:
         logger.error(f"Ошибка при создании сделки: {result}")
         await callback.message.delete()

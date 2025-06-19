@@ -71,12 +71,11 @@ async def check_user(db_record):
             msg = await bot.send_message(db_record.telegram_id,text='Обнаружено исполнительное производство! Нажмите кнопку',
                                 reply_markup=stop(f"{person['process_title']} от {person.get('process_date')}" if 'process_title' in person else ''))
             track_bot_message(db_record.telegram_id, msg, ignore=True)
-            msg = await bot.send_message(db_record.telegram_id,text=messages.get('referal'))
+            msg = await bot.send_message(db_record.telegram_id,text=messages.get('referal'),reply_markup=referal_keyboard())
             track_bot_message(db_record.telegram_id, msg, ignore=True)
             break
     
-    else:
-        logger.info("Запись не найдена.")
+    else: 
         msg = await bot.send_message(db_record.telegram_id,text='Исполнительные производства не найдены')
         track_bot_message(db_record.telegram_id, msg, ignore=True)
         msg = await bot.send_message(db_record.telegram_id,text=messages.get('referal'),reply_markup=referal_keyboard())
