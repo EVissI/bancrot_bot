@@ -5,11 +5,13 @@ from loguru import logger
 import requests
 
 from app.bot.common.utils import create_bitrix_deal
-from app.bot.keyboards.inline_kb import StopBancrData
+from app.bot.keyboards.inline_kb import StopBancrData, referal_keyboard
+from app.bot.midlewares.message_history import track_bot_message
 from app.config import settings
 from app.db.dao import UserDAO
 from app.db.database import async_session_maker
-from app.db.schemas import TelegramIDModel
+from app.db.schemas import TelegramIDModel, UserFilterModel
+from app.bot.common.msg import messages
 stop_router = Router()
 
 @stop_router.callback_query(StopBancrData.filter())
@@ -17,7 +19,11 @@ async def process_stop(query: CallbackQuery, callback_data:StopBancrData):
     try:
         async with async_session_maker() as session:
             user_from_db = await UserDAO.find_one_or_none(session,TelegramIDModel(telegram_id=query.from_user.id))
-       
+
+        if not user_from_db.can_use_fccp:
+            msg = await query.message.answer(messages.get('second_use_fccp_module'),reply_markup=referal_keyboard())
+            track_bot_message(query.from_user.id, msg)
+            return
         if user_from_db.username:
             telegram_link = f"https://t.me/{user_from_db.username}"
         else:
@@ -36,11 +42,17 @@ async def process_stop(query: CallbackQuery, callback_data:StopBancrData):
         success, result = await create_bitrix_deal(title=f'{fio}_ТГБОТ',comment=comment_msg,category_id='7',stage_id='C7:UC_CYWJJ2')
         if success:
             await query.message.delete()
-            await query.message.answer('Отлично, скоро с вами свяжется наш менеджер')
+            msg = await query.message.answer('Отлично, скоро с вами свяжется наш менеджер')
+            track_bot_message(query.from_user.id, msg)
+            async with async_session_maker() as session:
+                user_from_db.can_use_fccp = False
+                await UserDAO.update(session, TelegramIDModel(telegram_id=query.from_user.id),
+                                      UserFilterModel.model_validate(user_from_db.to_dict()))
         else:
             logger.error(f"Ошибка при создании сделки: {result}")
             await query.message.delete()
-            await query.message.answer('Произошла ошибка на сервере, попробуйте позже')
+            msg = await query.message.answer('Произошла ошибка на сервере, попробуйте позже')
+            track_bot_message(query.from_user.id, msg)
 
     except Exception as e:
         logger.error(f'При отправке лида от юзера {query.from_user.id} произошла ошибка - {str(e)}')

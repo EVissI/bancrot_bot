@@ -81,3 +81,21 @@ def get_consent_keyboard() -> InlineKeyboardMarkup:
     )
     kb.adjust(1)
     return kb.as_markup()
+
+def referal_keyboard() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text="👥 Порекомендовать друга",
+        callback_data="referal"
+    )
+    kb.adjust(1)
+    return kb.as_markup()
+
+def referal_keyboard_v2() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text="👥 Пригласить еще",
+        callback_data="referal"
+    )
+    kb.adjust(1)
+    return kb.as_markup()

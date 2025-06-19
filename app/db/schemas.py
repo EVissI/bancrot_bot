@@ -26,6 +26,7 @@ class UserModel(TelegramIDModel):
     old_last_name: Optional[str]
     end_sub_time: Optional[datetime]
     privacy_accepted: bool = False
+    can_use_fccp:bool = True
 
 
 class UserFilterModel(BaseModel):
@@ -41,6 +42,7 @@ class UserFilterModel(BaseModel):
     old_last_name: Optional[str] = None
     end_sub_time: Optional[datetime] = None
     privacy_accepted: bool = None
+    can_use_fccp:bool = None
 
 class PromocodeModel(BaseModel):
     code: str

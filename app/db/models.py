@@ -31,6 +31,8 @@ class TelegramUser(Base):
     end_sub_time:Mapped[Optional[datetime]] = mapped_column(DateTime, default=None)
     privacy_accepted: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    can_use_fccp: Mapped[bool] = mapped_column(Boolean, default=True)
+
     used_promocodes:Mapped[list['UserPromocode']] = relationship("UserPromocode", back_populates="user")
 
 class Promocode(Base):

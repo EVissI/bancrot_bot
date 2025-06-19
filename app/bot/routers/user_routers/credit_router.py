@@ -4,7 +4,7 @@ from aiogram.types import Message,CallbackQuery
 from loguru import logger
 
 from app.bot.common.utils import create_bitrix_deal
-from app.bot.keyboards.inline_kb import check_credit
+from app.bot.keyboards.inline_kb import check_credit, referal_keyboard
 from app.bot.keyboards.markup_kb import MainKeyboard
 from app.bot.midlewares.message_history import track_bot_message
 from app.db.dao import UserDAO
@@ -37,7 +37,15 @@ async def process_dispute_credit(callback:CallbackQuery):
     success, result = await create_bitrix_deal(title=f'{fio}_КРЕДИТНАЯ_ИСТОРИЯ_ТГБОТ',comment=comment_msg,category_id='7',stage_id='PREPARATION')
     if success:
         await callback.message.delete()
-        await callback.message.answer('Отлично, скоро с вами свяжется наш менеджер')
+        text = """🔄 Обрабатываем вашу заявку на изменение кредитной истории после банкротства!
+После завершения процедуры можно исправить кредитную историю и восстановить вашу финансовую репутацию
+
+💰 Пока мы работаем — вы можете заработать 10 000 ₽!
+Приводите друзей в К127:
+→ Мы спишем их долги
+→ Вы получите вознаграждение
+"""
+        await callback.message.answer(text, reply_markup=referal_keyboard())
     else:
         logger.error(f"Ошибка при создании сделки: {result}")
         await callback.message.delete()

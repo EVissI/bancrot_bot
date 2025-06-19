@@ -13,6 +13,7 @@ from aiogram.fsm.context import FSMContext
 from loguru import logger
 
 from app.bot.common.utils import create_bitrix_deal, bitrix_add_comment_to_deal
+from app.bot.keyboards.inline_kb import referal_keyboard_v2
 from app.bot.midlewares.message_history import track_bot_message
 from app.bot.sheldured_task.send_notification import check_user_and_send_notification
 from app.db.dao import UserDAO
@@ -44,14 +45,21 @@ def is_valid_fio(fio: str) -> bool:
     return len(fio.strip().split()) >= 2
 
 
-@main_user_router.message(F.text == MainKeyboard.get_user_kb_texts().get("referal"))
+@main_user_router.message((F.text == MainKeyboard.get_user_kb_texts().get("referal")))
 async def process_referal(message: Message, state: FSMContext):
     msg = await message.answer(
-        "Введите ваше ФИО человека которому вы хотите помочь"
+        "Введите ФИО человека которому вы хотите помочь"
     )
     track_bot_message(message.chat.id, msg)
     await state.set_state(Referal.fio)
 
+@main_user_router.callback_query(F.data == "referal")
+async def process_referal_query(query: CallbackQuery, state: FSMContext):
+    msg = await query.message.answer(
+        "Введите ФИО человека которому вы хотите помочь"
+    )
+    track_bot_message(query.chat.id, msg)
+    await state.set_state(Referal.fio)
 
 @main_user_router.message(F.text, StateFilter(Referal.fio))
 async def process_referal_title(message: Message, state: FSMContext):
@@ -140,9 +148,16 @@ async def process_referal(message: Message, state: FSMContext):
                 settings.WORK_CHAT_ID, notify_text, parse_mode="HTML", reply_markup=kb
             )
 
+    text = """🌟 Благодарим за вашу рекомендацию!
+    Мы свяжемся с [ФИО] по номеру [номер] в ближайшее время.
+
+    🔥 Но почему бы не пойти дальше?
+    Чем больше друзей вы приведете, тем выше будет ваша персональная премия:
+
+    ▫️ 5 друзей = 75 000₽
+    ▫️ 10 друзей = 200 000₽"""
     msg = await message.answer(
-        "Спасибо за то что не остались в стороне и решили помочь своему близкому. "
-        "Если человек, которому вы решили помочь, оформит у нас банкротство, вы получите 10 000 рублей."
+        text, reply_markup=referal_keyboard_v2()
     )
     track_bot_message(message.chat.id, msg)
     await state.clear()
