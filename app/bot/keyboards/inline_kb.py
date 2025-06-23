@@ -4,7 +4,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.filters.callback_data import CallbackData
 
 def get_subscription_on_chanel_keyboard() -> InlineKeyboardMarkup:
-    channel_url = 'https://t.me/arbitrilin' 
+    channel_url = 'https://t.me/bankrot_guru' 
     kb = InlineKeyboardBuilder()
     kb.button(
         text="Подписаться", url=channel_url,

@@ -11,6 +11,7 @@ from app.db.dao import UserDAO
 from app.db.schemas import TelegramIDModel
 from app.db.database import async_session_maker
 from app.bot.midlewares.message_history import track_bot_message
+from app.db.models import TelegramUser
 
 balance_router = Router()
 
@@ -39,7 +40,7 @@ async def process_balance(callback: CallbackQuery):
     """Обработчик нажатия кнопки баланса"""
     async with async_session_maker() as session:
         await callback.answer()
-        user = await UserDAO.find_one_or_none(
+        user:TelegramUser = await UserDAO.find_one_or_none(
             session, TelegramIDModel(telegram_id=callback.from_user.id)
         )
 
@@ -58,4 +59,4 @@ async def process_balance(callback: CallbackQuery):
         msg = await callback.message.answer(
             f"📊 <b>Ваш баланс</b>\n\n" f"Статус подписки: {remaining_time}\n\n"
         )
-        track_bot_message(callback.chat.id, msg)
+        track_bot_message(msg.chat.id, msg)
