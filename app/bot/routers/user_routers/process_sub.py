@@ -117,21 +117,15 @@ async def process_promo_code(
         )
 
     if not promocode:
-        await message.answer('Промокод неверный или неактивен')
-        await message.answer(
-            'Для работы бота нужно, либо оплатить подписку, либо активировать промокод',
-            reply_markup=get_subscription_keyboard()
-        )
+        await message.answer('Промокод неверный или неактивен',
+                            reply_markup=MainKeyboard.build_main_kb(tg_id=message.from_user.id))
         await state.clear()
         return
     
 
     if promocode.max_usage and promocode.activate_count >= promocode.max_usage:
-        await message.answer('Превышен лимит использования промокода')
-        await message.answer(
-            'Для работы бота нужно, либо оплатить подписку, либо активировать другой промокод',
-            reply_markup=get_subscription_keyboard()
-        )
+        await message.answer('Превышен лимит использования промокода',
+                            reply_markup=MainKeyboard.build_main_kb(tg_id=message.from_user.id))
         await state.clear()
         return
     async with async_session_maker() as session:
@@ -144,7 +138,8 @@ async def process_promo_code(
         )
 
     if user_promocode:
-        await message.answer('Вы уже использовали этот промокод')
+        await message.answer('Вы уже использовали этот промокод',
+                            reply_markup=MainKeyboard.build_main_kb(tg_id=message.from_user.id))
         await state.clear()
         return
     async with async_session_maker() as session:
