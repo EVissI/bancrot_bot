@@ -34,7 +34,7 @@ async def start_req(callback: CallbackQuery, state: FSMContext):
         "Перед использованием бота ознакомьтесь с соглашением по кнопке ниже. Если вы согласны, поделитесь номером телефона.",
         reply_markup=get_agreement_keyboard()
     )
-    track_bot_message(callback.chat.id, msg)
+    track_bot_message(callback.message.chat.id, msg)
     await state.set_state(Registration.phone)
 
 
