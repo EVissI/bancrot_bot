@@ -73,10 +73,14 @@ async def cmd_start(message: Message, state: FSMContext):
         if user_from_db:
             await message.answer(f'Привет, {user_from_db.user_enter_first_name}!', reply_markup=MainKeyboard.build_main_kb(message.from_user.id))
             return
-    chat_member = await message.bot.get_chat_member(chat_id=settings.CHAT_TO_SUB, user_id=message.from_user.id)
-    if chat_member.status == 'left':
-        await message.answer("Пожалуйста, подпишитесь на наш канал, чтобы продолжить.", reply_markup=get_subscription_on_chanel_keyboard())
-        return
+        chat_member = await message.bot.get_chat_member(chat_id=settings.CHAT_TO_SUB, user_id=message.from_user.id)
+        if chat_member.status == 'left':
+            await message.answer("Пожалуйста, подпишитесь на наш канал, чтобы продолжить.", reply_markup=get_subscription_on_chanel_keyboard())
+            return
+        if not user_from_db:
+            await message.answer('Для использования ботом нужно пройти анкетрование. Чтобы начать - нажмите кнопку "Я готов"',reply_markup=im_ready())
+            return
+    
 
 @main_user_router.message(StateFilter(ReferalComment.waiting_comment))
 async def process_referal_comment(message: Message, state: FSMContext):
