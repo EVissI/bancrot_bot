@@ -121,4 +121,4 @@ async def check_subscription(callback:CallbackQuery,state:FSMContext):
                 await callback.message.delete()
                 await callback.message.answer("Можете свободно пользоваться ботом",reply_markup=MainKeyboard.build_main_kb(callback.from_user.id))
                 return
-            await callback.message.answer('Для использования ботом нужно пройти анкетрование, чтобы начать нажмите кнопук "Я готов"',reply_markup=im_ready())
+            await callback.message.answer('Для использования ботом нужно пройти анкетрование. Чтобы начать - нажмите кнопку "Я готов"',reply_markup=im_ready())
