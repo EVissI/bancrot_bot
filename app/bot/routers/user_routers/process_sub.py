@@ -145,10 +145,6 @@ async def process_promo_code(
 
     if user_promocode:
         await message.answer('Вы уже использовали этот промокод')
-        await message.answer(
-            'Для работы бота нужно, либо оплатить подписку, либо активировать другой промокод',
-            reply_markup=get_subscription_keyboard()
-        )
         await state.clear()
         return
     async with async_session_maker() as session:
