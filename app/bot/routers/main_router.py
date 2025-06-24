@@ -28,13 +28,11 @@ from app.db.database import async_session_maker
 
 main_router = Router()
 
-registration_router.message.middleware(CheckPaidSubscription())
 payment_router.message.middleware(CheckPaidSubscription())
 stop_router.message.middleware(CheckPaidSubscription())
 main_user_router.message.middleware(CheckPaidSubscription())
 credits_router.message.middleware(CheckPaidSubscription())
 
-registration_router.message.middleware(CheckSub())
 payment_router.message.middleware(CheckSub())
 stop_router.message.middleware(CheckSub())
 main_user_router.message.middleware(CheckSub())
