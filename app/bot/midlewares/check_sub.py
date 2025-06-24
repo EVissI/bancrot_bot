@@ -13,7 +13,6 @@ class CheckSub(BaseMiddleware):
                        event:Message, 
                        data:Dict[str,Any]) -> Any:
         chat_member = await event.bot.get_chat_member(settings.CHAT_TO_SUB, event.from_user.id)
-        print(chat_member)
         if chat_member.status == 'left':
             await event.answer(
                 'Подпишись на канал, чтобы пользоваться ботом',reply_markup=get_subscription_on_chanel_keyboard()

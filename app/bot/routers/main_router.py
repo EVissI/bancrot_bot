@@ -1,7 +1,7 @@
 ﻿from app.bot.common.msg import messages
-from aiogram import Router,F
+from aiogram import Bot, Router,F
 from aiogram.filters import CommandStart,StateFilter
-from aiogram.types import Message,CallbackQuery
+from aiogram.types import Message, CallbackQuery, ChatMember
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
@@ -39,6 +39,7 @@ payment_router.message.middleware(CheckSub())
 stop_router.message.middleware(CheckSub())
 main_user_router.message.middleware(CheckSub())
 credits_router.message.middleware(CheckSub())
+balance_router.message.middleware(CheckSub())
 
 admin_router.message.middleware(CheckAdmin())
 
@@ -91,10 +92,28 @@ async def process_referal_comment(message: Message, state: FSMContext):
     track_bot_message(message.chat.id, msg)
     await state.clear()
 
-@main_user_router.message(F.text == "123123123123123123")
-async def test_message(message: Message):
+async def is_user_subscribed(bot: Bot, user_id: int, channel_id: str) -> bool:
     """
-    Тестовая функция для проверки работы бота.
+    Проверяет, подписан ли пользователь на канал/группу.
+    :param bot: Экземпляр бота
+    :param user_id: Telegram ID пользователя
+    :param channel_id: username или ID канала (например, '@your_channel' или '-1001234567890')
+    :return: True если подписан, иначе False
     """
-    msg = await message.answer("Тестовое сообщение успешно отправлено!",reply_markup=get_agreement_keyboard())
-    track_bot_message(message.chat.id, msg)
+    try:
+        member: ChatMember = await bot.get_chat_member(chat_id=channel_id, user_id=user_id)
+        return member.status not in ('left', 'kicked')
+    except Exception as e:
+        # Можно залогировать ошибку, если нужно
+        return False
+
+@main_user_router.callback_query(F.data == "check_subscription")
+async def check_subscription(callback:CallbackQuery,state:FSMContext):
+    if not await is_user_subscribed(callback.bot, callback.from_user.id, settings.CHAT_TO_SUB):
+        await callback.answer(
+            "Пожалуйста, подпишитесь на наш канал, чтобы продолжить.",
+        )
+        return
+    else:
+        await callback.message.delete()
+        await callback.message.answer("Можете свободно пользоваться ботом",reply_markup=MainKeyboard.build_main_kb(callback.from_user.id))
