@@ -99,3 +99,4 @@ def referal_keyboard_v2() -> InlineKeyboardMarkup:
     )
     kb.adjust(1)
     return kb.as_markup()
+

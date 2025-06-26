@@ -4,10 +4,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import StateFilter
 from app.bot.keyboards.markup_kb import MainKeyboard, PromocodeKeyboard, BackKeyboard
-from app.db.dao import PromocodeDAO
+from app.db.dao import PromocodeDAO,UserPromocodeDAO
 from app.db.database import async_session_maker
 from app.db.models import Promocode
-from app.db.schemas import PromocodeModel,PromocodeFilterModel
+from app.db.schemas import PromocodeModel,PromocodeFilterModel,UserPromocodeFilterModel
 promocode_router = Router()
 
 class CreatePromocodeStates(StatesGroup):
@@ -91,18 +91,19 @@ async def view_active_promocodes(message: Message):
     async with async_session_maker() as session:
         active_promocodes = await PromocodeDAO.find_all(session,filters=PromocodeFilterModel(is_active=True))
 
-    if not active_promocodes:
-        await message.answer("Нет активных промокодов.", reply_markup=PromocodeKeyboard.build_promocode_kb())
-        return
+        if not active_promocodes:
+            await message.answer("Нет активных промокодов.", reply_markup=PromocodeKeyboard.build_promocode_kb())
+            return
 
-    for promocode in active_promocodes:
-        await message.answer(
-            f"Код: {promocode.code}\n"
-            f"Дней подписки: {promocode.discount_days}\n"
-            f"Макс. использований: {promocode.max_usage or 'без ограничений'}\n"
-            f"Использовано: {promocode.activate_count}",
-            reply_markup=PromocodeKeyboard.build_promocode_kb()
-        )
+        for promocode in active_promocodes:
+            used_promocode = await UserPromocodeDAO.find_all(session, UserPromocodeFilterModel(promocode_id=promocode.id))
+            await message.answer(
+                f"Код: {promocode.code}\n"
+                f"Дней подписки: {promocode.discount_days}\n"
+                f"Макс. использований: {promocode.max_usage or 'без ограничений'}\n"
+                f"Использовано: {used_promocode.count()}",
+                reply_markup=PromocodeKeyboard.build_promocode_kb()
+            )
 
 @promocode_router.message(F.text == PromocodeKeyboard.get_promocode_kb_texts('deactivate_promocode'))
 async def start_deactivate_promocode(message: Message, state: FSMContext):
