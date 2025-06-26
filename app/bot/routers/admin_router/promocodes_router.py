@@ -101,7 +101,7 @@ async def view_active_promocodes(message: Message):
                 f"Код: {promocode.code}\n"
                 f"Дней подписки: {promocode.discount_days}\n"
                 f"Макс. использований: {promocode.max_usage or 'без ограничений'}\n"
-                f"Использовано: {used_promocode.count()}",
+                f"Использовано: {len(used_promocode)}",
                 reply_markup=PromocodeKeyboard.build_promocode_kb()
             )
 
