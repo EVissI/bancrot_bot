@@ -12,7 +12,6 @@ class CheckAdmin(BaseMiddleware):
     ) -> Any:
         # Проверяем есть ли ID пользователя в списке админов
         if event.from_user.id not in settings.ADMIN_IDS:
-            await event.answer("У вас нет прав для выполнения этой команды.")
             return
             
         return await handler(event, data)

@@ -6,8 +6,8 @@ from aiogram.fsm.state import State, StatesGroup
 from app.bot.common.msg import messages
 from loguru import logger
 
-from app.bot.keyboards.inline_kb import get_subscription_keyboard, get_consent_keyboard
-from app.bot.keyboards.markup_kb import get_agreement_keyboard
+from app.bot.keyboards.inline_kb import ConfirmInRegistrationCallbackData, build_req_confirm_kb, get_subscription_keyboard, get_consent_keyboard
+from app.bot.keyboards.markup_kb import BackKeyboard, MainKeyboard, get_agreement_keyboard
 from app.db.database import async_session_maker
 from app.db.dao import UserDAO
 from app.db.schemas import TelegramIDModel, UserModel
@@ -24,12 +24,10 @@ class Registration(StatesGroup):
     old_last_name = State()
 
 
-
-
 @registration_router.callback_query(F.data.startswith("im_ready_to_req"))
 async def start_req(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
-    msg = await callback.message.answer(
+    await callback.message.answer(
         "Перед использованием бота ознакомьтесь с соглашением по кнопке ниже. Если вы согласны, поделитесь номером телефона.",
         reply_markup=get_agreement_keyboard()
     )
@@ -39,19 +37,24 @@ async def start_req(callback: CallbackQuery, state: FSMContext):
 @registration_router.message(F.contact, StateFilter(Registration.phone))
 async def process_phone(message: Message, state: FSMContext):
     await state.update_data({"phone": message.contact.phone_number})
-    msg = await message.answer(
-        "Прекрасно, давай знакомиться! Напиши свое ФИО как в паспорте",
-        reply_markup=None)
+    await message.answer(
+        "Прекрасно, давай знакомиться! Напиши свое ФИО как в паспорте (например: Иванов Иван Иванович)\n\n Это нужно для поиска в базе ФССП",
+        reply_markup=BackKeyboard.build_back_kb())
     await state.set_state(Registration.fio)
 
+@registration_router.message(F.text == BackKeyboard.get_button_text(), StateFilter(Registration))
+async def cmd_back(message: Message, state: FSMContext):
+    await message.answer(message.text, 
+                         reply_markup=MainKeyboard.build_main_kb(message.from_user.id))
+    await state.clear()
 
 @registration_router.message(
     F.text.regexp(r"^\s*\S+(\s+\S+){2}\s*$"), StateFilter(Registration.fio)
 )
 async def process_fio(message: Message, state: FSMContext):
     await state.update_data({"fio": message.text})
-    msg = await message.answer(
-        "Приятно познакомиться! Теперь можете написать дату рождения в формате дд.мм.гггг(пример: 29.03.1992)"
+    await message.answer(
+        "Напишите дату рождения в формате дд.мм.гггг(например: 29.03.1992)\n\n Это необходимо для точной идентификации и исключения однофамильцев"
     )
     await state.set_state(Registration.date_of_brth)
 
@@ -60,7 +63,7 @@ async def process_fio(message: Message, state: FSMContext):
     ~F.text.regexp(r"^\s*\S+(\s+\S+){2}\s*$"), StateFilter(Registration.fio)
 )
 async def error_fio(message: Message):
-    msg= await message.answer("Это не похоже на ФИО, попробуйте еще раз")
+    await message.answer("Это не похоже на ФИО (например: Иванов Иван Иванович), попробуйте снова")
 
 @registration_router.message(
     F.text.regexp(r"^(0[1-9]|[12]\d|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$"),
@@ -68,10 +71,28 @@ async def error_fio(message: Message):
 )
 async def process_dot(message: Message, state: FSMContext):
     await state.update_data({"dot": message.text})
-    msg = await message.answer(
-        "Теперь пожалуйста, введите регион проживания полностью (например: Удмуртская Республика, Волгоградская область)"
+    data = await state.get_data()
+    await message.answer(
+        f'ФИО: {data.get('fio')}\nДата рождения: {data.get('dot')}',reply_markup=build_req_confirm_kb()
+    )
+
+
+@registration_router.callback_query(ConfirmInRegistrationCallbackData.filter(F.action == 'confirm'))
+async def process_confirm(callback:CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+    await callback.message.answer(
+        "Укажите регион для сужения области поиска и повышения точности (например: Удмуртская Республика, Волгоградская область)\n\n "
     )
     await state.set_state(Registration.region)
+
+
+@registration_router.callback_query(ConfirmInRegistrationCallbackData.filter(F.action == 'change'))
+async def process_change(callback:CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+    await callback.message.answer(
+        "Прекрасно, давай знакомиться! Напиши свое ФИО как в паспорте (например: Иванов Иван Иванович)\n\n Это нужно для поиска в базе ФССП",
+        reply_markup=BackKeyboard.build_back_kb())
+    await state.set_state(Registration.fio)
 
 
 @registration_router.message(
@@ -79,7 +100,7 @@ async def process_dot(message: Message, state: FSMContext):
     StateFilter(Registration.date_of_brth),
 )
 async def error_dot(message: Message, state: FSMContext):
-    msg = await message.answer("Неверный формат ввода")
+    await message.answer("Неверный формат ввода")
 
 
 @registration_router.message(F.text, StateFilter(Registration.region))
@@ -126,14 +147,14 @@ async def process_old_last_name(message: Message, state: FSMContext):
                     filters=TelegramIDModel(telegram_id=message.from_user.id),
                     values=user,
                 )
-            else:
+            if not telegram_user:
                 await UserDAO.add(session=session, values=user)
         await message.answer(
-            "Отлично,теперь оплатите подписку для дальнейшего пользования ботом",
-            reply_markup=get_subscription_keyboard(),
+            'Спасибо, теперь вам доступны функции "Проверить ИП" и "Партнерская программа"', 
+            reply_markup=MainKeyboard.build_main_kb(message.from_user.id)
         )
     except Exception as e:
         logger.error(f"При добавлении юзера произошла ошибка - {str(e)}")
-        await message.answer("Что-то пошло не так")
+        await message.answer("Ошибка на стороне сервера, попробуйте снова позже")
     finally:
         await state.clear()

@@ -36,10 +36,10 @@ class BackKeyboard:
 
 class MainKeyboard:
     __user_kb_texts_dict_ru = {
-        "check_isp": "Проверить исполнительные производства",
-        "check_credit": "Проверить кредитную историю",
+        "check_isp": "Проверить ИП",
+        "check_credit": "Кредитная история",
         "balance":"Баланс",
-        "referal": "Порекомендовать друга",
+        "referal": "Партнерская программа",
 
     }
 
