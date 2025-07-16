@@ -115,3 +115,19 @@ def build_req_confirm_kb() -> InlineKeyboardMarkup:
     )
     kb.adjust(2)
     return kb.as_markup()
+
+class LastNameChangeCallback(CallbackData, prefix="registration_confirm"):
+    flag:bool
+
+def build_has_last_name_changed() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text="Да",
+        callback_data=LastNameChangeCallback(flag = True)
+    )
+    kb.button(
+        text="Нет",
+        callback_data=LastNameChangeCallback(flag = False)
+    )
+    kb.adjust(2)
+    return kb.as_markup()

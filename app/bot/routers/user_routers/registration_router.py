@@ -6,7 +6,7 @@ from aiogram.fsm.state import State, StatesGroup
 from app.bot.common.msg import messages
 from loguru import logger
 
-from app.bot.keyboards.inline_kb import ConfirmInRegistrationCallbackData, build_req_confirm_kb, get_subscription_keyboard, get_consent_keyboard
+from app.bot.keyboards.inline_kb import ConfirmInRegistrationCallbackData, LastNameChangeCallback, build_has_last_name_changed, build_req_confirm_kb, get_subscription_keyboard, get_consent_keyboard
 from app.bot.keyboards.markup_kb import BackKeyboard, MainKeyboard, get_agreement_keyboard
 from app.db.database import async_session_maker
 from app.db.dao import UserDAO
@@ -107,18 +107,26 @@ async def error_dot(message: Message, state: FSMContext):
 async def process_region(message: Message, state: FSMContext):
     await state.update_data({"region": message.text})
     await message.answer(
-        "Остался последний шаг. Eсли вы меняли фамилию, введите вашу старую фамилию. Если нет, поставьте -"
+        "Вы меняли фамилию (например, после замужества)?",reply_markup=build_has_last_name_changed()
     )
+
+@registration_router.callback_query(LastNameChangeCallback.filter(F.flag == True))
+async def process_change_last_name_yes(callback:CallbackQuery, state: FSMContext):
+    await callback.message.answer('Введите вашу старую фамилию')
     await state.set_state(Registration.old_last_name)
 
-
 @registration_router.message(F.text, StateFilter(Registration.old_last_name))
+async def process_change_last_name_text(message:Message, state:FSMContext):
+    await state.update_data({"old_last_name": message.text})
+    await process_old_last_name(message, state)
+
+@registration_router.callback_query(LastNameChangeCallback.filter(F.flag == False))
+async def process_change_last_name_no(callback:CallbackQuery, state: FSMContext):
+    await state.update_data({"old_last_name": None})
+    await process_old_last_name(callback.message, state)
+
 async def process_old_last_name(message: Message, state: FSMContext):
     try:
-        if message.text == "-":
-            await state.update_data({"old_last_name": None})
-        else:
-            await state.update_data({"old_last_name": message.text})
         state_data = await state.get_data()
         async with async_session_maker() as session:
             telegram_user = await UserDAO.find_one_or_none(
