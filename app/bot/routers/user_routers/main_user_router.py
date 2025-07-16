@@ -14,7 +14,6 @@ from loguru import logger
 
 from app.bot.common.utils import create_bitrix_deal, bitrix_add_comment_to_deal
 from app.bot.keyboards.inline_kb import referal_keyboard, referal_keyboard_v2
-from app.bot.midlewares.message_history import track_bot_message
 from app.bot.sheldured_task.send_notification import check_user_and_send_notification
 from app.db.dao import UserDAO
 from app.db.database import async_session_maker
@@ -40,7 +39,6 @@ async def process_check_isp(message: Message):
         )
         if not user.can_use_fccp:
             msg = await message.answer(messages.get('second_use_fccp_module'),reply_markup=referal_keyboard())
-            track_bot_message(message.from_user.id, msg)
             return
         msg = await message.answer("Производится проверка...")
         await check_user_and_send_notification(message.from_user.id)
@@ -63,7 +61,6 @@ async def process_referal(message: Message, state: FSMContext):
     msg = await message.answer(
         "Введите ФИО человека которому вы хотите помочь"
     )
-    track_bot_message(message.chat.id, msg)
     await state.set_state(Referal.fio)
 
 @main_user_router.callback_query(F.data == "referal")
@@ -73,7 +70,6 @@ async def process_referal_query(query: CallbackQuery, state: FSMContext):
     msg = await query.message.answer(
         "Введите ФИО человека которому вы хотите помочь"
     )
-    track_bot_message(query.message.chat.id, msg)
     await state.set_state(Referal.fio)
 
 @main_user_router.message(F.text, StateFilter(Referal.fio))
@@ -82,13 +78,11 @@ async def process_referal_title(message: Message, state: FSMContext):
         msg = await message.answer(
             "Пожалуйста, введите корректное ФИО (минимум имя и фамилия)"
         )
-        track_bot_message(message.chat.id, msg)
         return
     await state.update_data({"fio": message.text})
     msg = await message.answer(
         "Введите Его номер телефона в формате: +79991234567 или 89991234567"
     )
-    track_bot_message(message.chat.id, msg)
     await state.set_state(Referal.phone)
 
 
@@ -99,7 +93,6 @@ async def process_referal(message: Message, state: FSMContext):
         msg = await message.answer(
             "Пожалуйста, введите корректный номер телефона в формате: +79991234567 или 89991234567"
         )
-        track_bot_message(message.chat.id, msg)
         return
     recommended_fio = data.get("fio") 
     recommended_phone = message.text.strip()
@@ -176,7 +169,6 @@ async def process_referal(message: Message, state: FSMContext):
     msg = await message.answer(
         text, reply_markup=referal_keyboard_v2()
     )
-    track_bot_message(message.chat.id, msg)
     await state.clear()
 
 

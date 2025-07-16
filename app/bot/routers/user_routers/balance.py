@@ -10,7 +10,6 @@ from app.bot.keyboards.markup_kb import MainKeyboard
 from app.db.dao import UserDAO
 from app.db.schemas import TelegramIDModel
 from app.db.database import async_session_maker
-from app.bot.midlewares.message_history import track_bot_message
 from app.db.models import TelegramUser
 
 balance_router = Router()
@@ -26,13 +25,11 @@ async def balance_btn(message: Message):
 
         if not user:
             msg = await message.answer("Вы не зарегистрированы в системе.")
-            track_bot_message(message.chat.id, msg)
             return
 
         msg = await message.answer(
             "Выберите действие:", reply_markup=get_balance_keyboard()
         )
-        track_bot_message(message.chat.id, msg)
 
 
 @balance_router.callback_query(BalanceData.filter(F.action == "balance"))
@@ -59,4 +56,4 @@ async def process_balance(callback: CallbackQuery):
         msg = await callback.message.answer(
             f"📊 <b>Ваш баланс</b>\n\n" f"Статус подписки: {remaining_time}\n\n"
         )
-        track_bot_message(msg.chat.id, msg)
+

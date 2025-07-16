@@ -11,7 +11,6 @@ from app.bot.keyboards.markup_kb import MainKeyboard, get_agreement_keyboard
 from app.bot.midlewares.admin_middleware import CheckAdmin
 from app.bot.midlewares.check_sub import CheckSub
 from app.bot.midlewares.check_sub_to_bot import CheckPaidSubscription
-from app.bot.midlewares.message_history import track_bot_message
 from app.bot.routers.user_routers.main_user_router import main_user_router
 from app.bot.routers.user_routers.registration_router import registration_router
 from app.bot.routers.user_routers.process_sub import payment_router
@@ -61,7 +60,6 @@ async def cmd_start(message: Message, state: FSMContext):
         deal_id = message.text.split("_")[-1]
         await state.update_data(deal_id=deal_id)
         msg = await message.answer("Введите комментарий для клиента:")
-        track_bot_message(message.chat.id, msg)
         await state.set_state(ReferalComment.waiting_comment)
         return
     
@@ -91,7 +89,6 @@ async def process_referal_comment(message: Message, state: FSMContext):
         msg = await message.answer("Комментарий отправлен в Bitrix24!")
     else:
         msg = await message.answer("Ошибка при отправке комментария в Bitrix24.")
-    track_bot_message(message.chat.id, msg)
     await state.clear()
 
 async def is_user_subscribed(bot: Bot, user_id: int, channel_id: str) -> bool:

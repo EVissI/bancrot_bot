@@ -4,7 +4,6 @@ import json
 import asyncio
 import requests
 from app.bot.keyboards.inline_kb import referal_keyboard, stop
-from app.bot.midlewares.message_history import track_bot_message
 from app.db.dao import UserDAO
 from app.db.database import async_session_maker
 from app.db.schemas import UserFilterModel,TelegramIDModel
@@ -67,16 +66,12 @@ async def check_user(db_record):
         if sum_to_pay > 0:
             msg = await bot.send_message(db_record.telegram_id,text='Обнаружено исполнительное производство! Нажмите кнопку',
                                 reply_markup=stop(f"{person['process_title']} от {person.get('process_date')}" if 'process_title' in person else ''))
-            track_bot_message(db_record.telegram_id, msg, ignore=True)
             msg = await bot.send_message(db_record.telegram_id,text=messages.get('referal'),reply_markup=referal_keyboard())
-            track_bot_message(db_record.telegram_id, msg, ignore=True)
             break
     
     else: 
         msg = await bot.send_message(db_record.telegram_id,text='Исполнительные производства не найдены')
-        track_bot_message(db_record.telegram_id, msg, ignore=True)
         msg = await bot.send_message(db_record.telegram_id,text=messages.get('referal'),reply_markup=referal_keyboard())
-        track_bot_message(db_record.telegram_id, msg, ignore=True)
 
 
 async def retry_tasks_launch(last=False):
@@ -110,7 +105,6 @@ async def retry_tasks_launch(last=False):
                                         telegram_id,
                                         text='База ФССП временно недоступна. Мы предоставим информацию позже.'
                                     )
-                    track_bot_message(telegram_id, msg)
                 else:
                     new_retry_tasks.append(db_record.telegram_id)
     

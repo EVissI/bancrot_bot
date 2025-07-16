@@ -6,7 +6,6 @@ from loguru import logger
 from app.bot.common.utils import create_bitrix_deal
 from app.bot.keyboards.inline_kb import check_credit, referal_keyboard
 from app.bot.keyboards.markup_kb import MainKeyboard
-from app.bot.midlewares.message_history import track_bot_message
 from app.db.dao import UserDAO
 from app.db.schemas import TelegramIDModel
 from app.db.database import async_session_maker
@@ -16,7 +15,6 @@ credits_router = Router()
 @credits_router.message(F.text == MainKeyboard.get_user_kb_texts().get('check_credit'))
 async def process_check_credit(message:Message):
     msg = await message.answer('Кредитная история',reply_markup=check_credit())
-    track_bot_message(message.chat.id, msg)
 
 @credits_router.callback_query(F.data == 'dispute_credit')
 async def process_dispute_credit(callback:CallbackQuery):
@@ -46,7 +44,6 @@ async def process_dispute_credit(callback:CallbackQuery):
 → Вы получите вознаграждение
 """
         await callback.message.answer(text, reply_markup=referal_keyboard())
-        track_bot_message(callback.from_user.id, callback.message)
 
         await bot.send_message(
             chat_id=settings.WORK_CHAT_ID,

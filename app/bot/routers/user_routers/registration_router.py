@@ -8,7 +8,6 @@ from loguru import logger
 
 from app.bot.keyboards.inline_kb import get_subscription_keyboard, get_consent_keyboard
 from app.bot.keyboards.markup_kb import get_agreement_keyboard
-from app.bot.midlewares.message_history import track_bot_message
 from app.db.database import async_session_maker
 from app.db.dao import UserDAO
 from app.db.schemas import TelegramIDModel, UserModel
@@ -34,7 +33,6 @@ async def start_req(callback: CallbackQuery, state: FSMContext):
         "Перед использованием бота ознакомьтесь с соглашением по кнопке ниже. Если вы согласны, поделитесь номером телефона.",
         reply_markup=get_agreement_keyboard()
     )
-    track_bot_message(callback.message.chat.id, msg)
     await state.set_state(Registration.phone)
 
 
@@ -44,7 +42,6 @@ async def process_phone(message: Message, state: FSMContext):
     msg = await message.answer(
         "Прекрасно, давай знакомиться! Напиши свое ФИО как в паспорте",
         reply_markup=None)
-    track_bot_message(message.chat.id, msg)
     await state.set_state(Registration.fio)
 
 
@@ -56,7 +53,6 @@ async def process_fio(message: Message, state: FSMContext):
     msg = await message.answer(
         "Приятно познакомиться! Теперь можете написать дату рождения в формате дд.мм.гггг(пример: 29.03.1992)"
     )
-    track_bot_message(message.chat.id, msg)
     await state.set_state(Registration.date_of_brth)
 
 
@@ -65,8 +61,6 @@ async def process_fio(message: Message, state: FSMContext):
 )
 async def error_fio(message: Message):
     msg= await message.answer("Это не похоже на ФИО, попробуйте еще раз")
-    track_bot_message(message.chat.id, msg)
-
 
 @registration_router.message(
     F.text.regexp(r"^(0[1-9]|[12]\d|3[01])\.(0[1-9]|1[0-2])\.(19|20)\d{2}$"),
@@ -77,7 +71,6 @@ async def process_dot(message: Message, state: FSMContext):
     msg = await message.answer(
         "Теперь пожалуйста, введите регион проживания полностью (например: Удмуртская Республика, Волгоградская область)"
     )
-    track_bot_message(message.chat.id, msg)
     await state.set_state(Registration.region)
 
 
@@ -87,7 +80,6 @@ async def process_dot(message: Message, state: FSMContext):
 )
 async def error_dot(message: Message, state: FSMContext):
     msg = await message.answer("Неверный формат ввода")
-    track_bot_message(message.chat.id, msg)
 
 
 @registration_router.message(F.text, StateFilter(Registration.region))
@@ -96,7 +88,6 @@ async def process_region(message: Message, state: FSMContext):
     msg = await message.answer(
         "Остался последний шаг. Eсли вы меняли фамилию, введите вашу старую фамилию. Если нет, поставьте -"
     )
-    track_bot_message(message.chat.id, msg)
     await state.set_state(Registration.old_last_name)
 
 
@@ -141,7 +132,6 @@ async def process_old_last_name(message: Message, state: FSMContext):
             "Отлично,теперь оплатите подписку для дальнейшего пользования ботом",
             reply_markup=get_subscription_keyboard(),
         )
-        track_bot_message(message.chat.id, msg)
     except Exception as e:
         logger.error(f"При добавлении юзера произошла ошибка - {str(e)}")
         await message.answer("Что-то пошло не так")

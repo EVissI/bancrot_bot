@@ -6,7 +6,6 @@ import requests
 
 from app.bot.common.utils import create_bitrix_deal
 from app.bot.keyboards.inline_kb import StopBancrData, referal_keyboard
-from app.bot.midlewares.message_history import track_bot_message
 from app.config import settings
 from app.db.dao import UserDAO
 from app.db.database import async_session_maker
@@ -39,12 +38,10 @@ async def process_stop(query: CallbackQuery, callback_data:StopBancrData):
         if success:
             await query.message.delete()
             msg = await query.message.answer('Отлично, скоро с вами свяжется наш менеджер')
-            track_bot_message(query.from_user.id, msg)
         else:
             logger.error(f"Ошибка при создании сделки: {result}")
             await query.message.delete()
             msg = await query.message.answer('Произошла ошибка на сервере, попробуйте позже')
-            track_bot_message(query.from_user.id, msg)
 
     except Exception as e:
         logger.error(f'При отправке лида от юзера {query.from_user.id} произошла ошибка - {str(e)}')

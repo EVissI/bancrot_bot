@@ -58,8 +58,6 @@ def start_scheduler():
     logger.info("Планировщик задач запущен.")
 
 async def main():
-    # регистрация middleware
-    dp.message.middleware(MessageCleanerMiddleware())
     # регистрация роутеров
     dp.include_router(main_router)
 
