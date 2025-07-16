@@ -1,6 +1,6 @@
 ﻿from app.bot.common.msg import messages
 from aiogram import Bot, Router,F
-from aiogram.filters import CommandStart,StateFilter
+from aiogram.filters import CommandStart, StateFilter, Command
 from aiogram.types import Message, CallbackQuery, ChatMember
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -121,3 +121,9 @@ async def check_subscription(callback:CallbackQuery,state:FSMContext):
                 await callback.message.answer("Можете свободно пользоваться ботом",reply_markup=MainKeyboard.build_main_kb(callback.from_user.id))
                 return
             await callback.message.answer('Для использования ботом нужно пройти анкетрование. Чтобы начать - нажмите кнопку "Я готов"',reply_markup=im_ready())
+
+@main_router.message(Command('menu'))
+async def return_to_menu(message:Message, state:FSMContext):
+    await state.clear()
+    await message.answer('Возвращаю в главное меню',
+                         reply_markup=MainKeyboard.build_main_kb(message.from_user.id))

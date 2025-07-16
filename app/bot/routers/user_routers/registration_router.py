@@ -85,7 +85,7 @@ async def error_dot(message: Message, state: FSMContext):
 @registration_router.message(F.text, StateFilter(Registration.region))
 async def process_region(message: Message, state: FSMContext):
     await state.update_data({"region": message.text})
-    msg = await message.answer(
+    await message.answer(
         "Остался последний шаг. Eсли вы меняли фамилию, введите вашу старую фамилию. Если нет, поставьте -"
     )
     await state.set_state(Registration.old_last_name)
@@ -128,7 +128,7 @@ async def process_old_last_name(message: Message, state: FSMContext):
                 )
             else:
                 await UserDAO.add(session=session, values=user)
-        msg = await message.answer(
+        await message.answer(
             "Отлично,теперь оплатите подписку для дальнейшего пользования ботом",
             reply_markup=get_subscription_keyboard(),
         )

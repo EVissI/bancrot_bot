@@ -18,7 +18,7 @@ from aiogram.types import BotCommand, BotCommandScopeDefault, BotCommandScopeCha
 
 async def set_commands():
     commands = [
-        BotCommand(command="start", description="кнопка старт"),
+        BotCommand(command="menu", description='Возвращает в главное меню')
     ]
     await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
 
