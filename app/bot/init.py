@@ -8,12 +8,8 @@ from app.config import setup_logger
 
 setup_logger("bot")
 from loguru import logger
-from app.db.models import TelegramUser
 from app.config import bot, admins, dp
-from app.db.dao import UserDAO
-from app.db.database import async_session_maker
-from app.db.schemas import UserFilterModel
-from aiogram.types import BotCommand, BotCommandScopeDefault, BotCommandScopeChat
+from aiogram.types import BotCommand, BotCommandScopeDefault
 
 
 async def set_commands():

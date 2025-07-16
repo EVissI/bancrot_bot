@@ -17,7 +17,7 @@ from app.bot.keyboards.inline_kb import referal_keyboard, referal_keyboard_v2
 from app.bot.sheldured_task.send_notification import check_user_and_send_notification
 from app.db.dao import UserDAO
 from app.db.database import async_session_maker
-from app.bot.keyboards.markup_kb import MainKeyboard
+from app.bot.keyboards.markup_kb import BackKeyboard, MainKeyboard
 from app.db.schemas import TelegramIDModel, UserFilterModel
 from app.config import settings, bot
 from app.bot.common.msg import messages
@@ -58,16 +58,21 @@ def is_valid_fio(fio: str) -> bool:
 
 @main_user_router.message((F.text == MainKeyboard.get_user_kb_texts().get("referal")))
 async def process_referal(message: Message, state: FSMContext):
-    msg = await message.answer(
-        "Введите ФИО человека которому вы хотите помочь"
+    await message.answer(
+        "Введите ФИО человека которому вы хотите помочь",reply_markup=BackKeyboard.build_back_kb()
     )
     await state.set_state(Referal.fio)
+
+@main_user_router(F.text == BackKeyboard.get_button_text(), StateFilter(Referal))
+async def cmd_back(message:Message, state:FSMContext):
+    await message.answer(message.text, reply_markup=MainKeyboard.build_main_kb(message.from_user.id))
+    await state.clear()
 
 @main_user_router.callback_query(F.data == "referal")
 async def process_referal_query(query: CallbackQuery, state: FSMContext):
     await query.answer()
     await query.message.delete()
-    msg = await query.message.answer(
+    await query.message.answer(
         "Введите ФИО человека которому вы хотите помочь"
     )
     await state.set_state(Referal.fio)
@@ -75,12 +80,12 @@ async def process_referal_query(query: CallbackQuery, state: FSMContext):
 @main_user_router.message(F.text, StateFilter(Referal.fio))
 async def process_referal_title(message: Message, state: FSMContext):
     if not is_valid_fio(message.text):
-        msg = await message.answer(
+        await message.answer(
             "Пожалуйста, введите корректное ФИО (минимум имя и фамилия)"
         )
         return
     await state.update_data({"fio": message.text})
-    msg = await message.answer(
+    await message.answer(
         "Введите Его номер телефона в формате: +79991234567 или 89991234567"
     )
     await state.set_state(Referal.phone)
@@ -155,10 +160,10 @@ async def process_referal(message: Message, state: FSMContext):
             await bot.send_message(
                 settings.WORK_CHAT_ID, notify_text, parse_mode="HTML", reply_markup=kb
             )
-
-    text = f"""🌟<b>✨ Благодарим за вашу рекомендацию!</b>
-Мы свяжемся с <b>{recommended_fio}</b> по номеру <b>{recommended_phone}</b> в ближайшее время.
-
+    await message.answer(f"""🌟<b>✨ Благодарим за вашу рекомендацию!</b>
+Мы свяжемся с <b>{recommended_fio}</b> по номеру <b>{recommended_phone}</b> в ближайшее время.""",
+                        reply_markup=MainKeyboard.build_main_kb(message.from_user.id))
+    text = f"""
 🔥 <b>Но почему бы не пойти дальше?</b>
 Чем больше друзей вы приведете, тем выше будет ваша персональная премия:
 
@@ -166,7 +171,7 @@ async def process_referal(message: Message, state: FSMContext):
 • 10 друзей = <b>200 000₽</b>
 
 👉 <b>Продолжайте рекомендовать и экономьте:</b>"""
-    msg = await message.answer(
+    await message.answer(
         text, reply_markup=referal_keyboard_v2()
     )
     await state.clear()
