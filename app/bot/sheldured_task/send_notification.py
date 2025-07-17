@@ -1,5 +1,4 @@
-﻿import time
-from loguru import logger
+﻿from loguru import logger
 import json
 import asyncio
 import requests
