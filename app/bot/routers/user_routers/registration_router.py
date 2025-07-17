@@ -193,15 +193,15 @@ async def process_old_last_name(callback: CallbackQuery, state: FSMContext):
         state_data = await state.get_data()
         async with async_session_maker() as session:
             telegram_user = await UserDAO.find_one_or_none(
-                session, TelegramIDModel(telegram_id=callback.message.from_user.id)
+                session, TelegramIDModel(telegram_id=callback.from_user.id)
             )
             fio: str = state_data.get("fio")
             last_name, first_name, otchestvo = fio.split(" ")
             user = UserModel(
-                telegram_id=callback.message.from_user.id,
-                username=callback.message.from_user.username,
-                first_name=callback.message.from_user.first_name,
-                last_name=callback.message.from_user.last_name,
+                telegram_id=callback.from_user.id,
+                username=callback.from_user.username,
+                first_name=callback.from_user.first_name,
+                last_name=callback.from_user.last_name,
                 phone=state_data.get("phone"),
                 user_enter_first_name=first_name,
                 user_enter_last_name=last_name,
@@ -215,14 +215,14 @@ async def process_old_last_name(callback: CallbackQuery, state: FSMContext):
             if telegram_user:
                 await UserDAO.update(
                     session,
-                    filters=TelegramIDModel(telegram_id=callback.message.from_user.id),
+                    filters=TelegramIDModel(telegram_id=callback.from_user.id),
                     values=user,
                 )
             if not telegram_user:
                 await UserDAO.add(session=session, values=user)
         await callback.message.answer(
             'Спасибо, теперь вам доступны функции "Проверить ИП" и "Партнерская программа"',
-            reply_markup=MainKeyboard.build_main_kb(callback.message.from_user.id),
+            reply_markup=MainKeyboard.build_main_kb(callback.from_user.id),
         )
     except Exception as e:
         logger.error(f"При добавлении юзера произошла ошибка - {str(e)}")
