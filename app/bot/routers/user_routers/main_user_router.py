@@ -63,7 +63,7 @@ async def process_referal(message: Message, state: FSMContext):
     )
     await state.set_state(Referal.fio)
 
-@main_user_router(F.text == BackKeyboard.get_button_text(), StateFilter(Referal))
+@main_user_router.message(F.text == BackKeyboard.get_button_text(), StateFilter(Referal))
 async def cmd_back(message:Message, state:FSMContext):
     await message.answer(message.text, reply_markup=MainKeyboard.build_main_kb(message.from_user.id))
     await state.clear()
