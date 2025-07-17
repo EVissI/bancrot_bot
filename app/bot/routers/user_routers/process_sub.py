@@ -99,7 +99,7 @@ async def process_invoice(
 async def process_back(
     message:Message, state:FSMContext
 ):
-    await message.answer('Для работы бота нужно, либо оплатить подписку, либо активировать промокод',reply_markup=get_subscription_keyboard())
+    await message.answer(message.text,reply_markup=MainKeyboard.build_main_kb(message.from_user.id))
     await state.clear()
 
 @payment_router.message(F.text, StateFilter(EnterPromo.promo))
