@@ -57,6 +57,7 @@ def check_credit() -> InlineKeyboardMarkup:
     kb.button(
         text="Оспорить кредитную историю",callback_data="dispute_credit"
     )
+    kb.adjust(1)
     return kb.as_markup()
 
 class BalanceData(CallbackData, prefix="balance"):

@@ -14,7 +14,7 @@ credits_router = Router()
 
 @credits_router.message(F.text == MainKeyboard.get_user_kb_texts().get('check_credit'))
 async def process_check_credit(message:Message):
-    msg = await message.answer('Кредитная история',reply_markup=check_credit())
+    await message.answer('Проверить свою кредитную историю можно на сайте:',reply_markup=check_credit())
 
 @credits_router.callback_query(F.data == 'dispute_credit')
 async def process_dispute_credit(callback:CallbackQuery):
