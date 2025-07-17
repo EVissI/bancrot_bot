@@ -22,3 +22,5 @@ class HasReg(BaseMiddleware):
         if not user.privacy_accepted:
             await event.answer("Для пользования этим функционалом, вам необходимо пройти регистрацию.",reply_markup=im_ready())
             return
+        else:
+            return await handler(event,data)
