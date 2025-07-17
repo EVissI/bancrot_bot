@@ -9,8 +9,10 @@ from loguru import logger
 from app.bot.keyboards.inline_kb import (
     ConfirmInRegistrationCallbackData,
     LastNameChangeCallback,
+    RegFullConfirmCallbackData,
     build_has_last_name_changed,
     build_req_confirm_kb,
+    build_req_full_confirm_kb,
     get_subscription_keyboard,
     get_consent_keyboard,
 )
@@ -177,6 +179,7 @@ async def process_region(message: Message, state: FSMContext):
 
 @registration_router.callback_query(LastNameChangeCallback.filter(F.flag == True))
 async def process_change_last_name_yes(callback: CallbackQuery, state: FSMContext):
+    await callback.message.delete()
     await callback.message.answer("Введите вашу старую фамилию")
     await state.set_state(Registration.old_last_name)
 
@@ -184,10 +187,57 @@ async def process_change_last_name_yes(callback: CallbackQuery, state: FSMContex
 @registration_router.message(F.text, StateFilter(Registration.old_last_name))
 async def process_change_last_name_text(message: Message, state: FSMContext):
     await state.update_data({"old_last_name": message.text})
-    await process_old_last_name(message, state)
-
+    state_data = await state.get_data()
+    formatted_text = (
+        "<b>Проверьте введенные данные:</b>\n\n"
+        f"📱 Телефон: <code>{state_data.get('phone')}</code>\n"
+        f"👤 ФИО: <code>{state_data.get('fio')}</code>\n"
+        f"📅 Дата рождения: <code>{state_data.get('dot')}</code>\n"
+        f"📍 Регион: <code>{state_data.get('region')}</code>\n"
+    )
+    
+    if state_data.get('old_last_name'):
+        formatted_text += f"📝 Предыдущая фамилия: <code>{state_data.get('old_last_name')}</code>\n"
+    
+    await message.answer(formatted_text, 
+                                  reply_markup=build_req_full_confirm_kb(), 
+                                  parse_mode="HTML")
+    
 
 @registration_router.callback_query(LastNameChangeCallback.filter(F.flag == False))
+async def process_change_last_name_no(callback: CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+    state_data = await state.get_data()
+    formatted_text = (
+        "<b>Проверьте введенные данные:</b>\n\n"
+        f"📱 Телефон: <code>{state_data.get('phone')}</code>\n"
+        f"👤 ФИО: <code>{state_data.get('fio')}</code>\n"
+        f"📅 Дата рождения: <code>{state_data.get('dot')}</code>\n"
+        f"📍 Регион: <code>{state_data.get('region')}</code>\n"
+    )
+    
+    if state_data.get('old_last_name'):
+        formatted_text += f"📝 Предыдущая фамилия: <code>{state_data.get('old_last_name')}</code>\n"
+    
+    await callback.message.answer(formatted_text, 
+                                  reply_markup=build_req_full_confirm_kb(), 
+                                  parse_mode="HTML")
+
+@registration_router.callback_query(
+    RegFullConfirmCallbackData.filter(F.action == "change")
+)
+async def process_old_last_name_change(callback: CallbackQuery, state: FSMContext):
+    await callback.message.delete()
+    await callback.message.answer(
+        "Напиши свое ФИО как в паспорте (например: Иванов Иван Иванович)\n\n Это нужно для поиска в базе ФССП",
+        reply_markup=BackKeyboard.build_back_kb(),
+    )
+    await state.set_state(Registration.fio)
+
+
+@registration_router.callback_query(
+    RegFullConfirmCallbackData.filter(F.action == "confirm")
+)
 async def process_old_last_name(callback: CallbackQuery, state: FSMContext):
     try:
         state_data = await state.get_data()
@@ -209,7 +259,6 @@ async def process_old_last_name(callback: CallbackQuery, state: FSMContext):
                 data_of_birth=state_data.get("dot"),
                 region=state_data.get("region"),
                 old_last_name=state_data.get("old_last_name"),
-                end_sub_time=None,
                 privacy_accepted=True,
             )
             if telegram_user:

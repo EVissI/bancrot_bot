@@ -124,7 +124,23 @@ def build_req_confirm_kb() -> InlineKeyboardMarkup:
     kb.adjust(2)
     return kb.as_markup()
 
-class LastNameChangeCallback(CallbackData, prefix="registration_confirm"):
+class RegFullConfirmCallbackData(CallbackData, prefix="registration_full_confirm"):
+    action:str
+
+def build_req_full_confirm_kb() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text="Подтвердить",
+        callback_data=ConfirmInRegistrationCallbackData(action = 'confirm')
+    )
+    kb.button(
+        text="Изменить",
+        callback_data=ConfirmInRegistrationCallbackData(action = 'change')
+    )
+    kb.adjust(2)
+    return kb.as_markup()
+
+class LastNameChangeCallback(CallbackData, prefix="last_name_change"):
     flag:bool
 
 def build_has_last_name_changed() -> InlineKeyboardMarkup:
