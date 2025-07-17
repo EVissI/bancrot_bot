@@ -9,6 +9,7 @@ def get_agreement_keyboard():
         keyboard=[
             [KeyboardButton(text="Ознакомиться с соглашением", web_app=WebAppInfo(url="https://soglasiepd.netlify.app/"))],
             [KeyboardButton(text="Поделиться номером", request_contact=True)],
+            [KeyboardButton(text="Назад")],
         ],
         resize_keyboard=True,
     )
