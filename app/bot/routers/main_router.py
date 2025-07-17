@@ -11,6 +11,7 @@ from app.bot.keyboards.markup_kb import MainKeyboard, get_agreement_keyboard
 from app.bot.midlewares.admin_middleware import CheckAdmin
 from app.bot.midlewares.check_sub import CheckSub
 from app.bot.midlewares.check_sub_to_bot import CheckPaidSubscription
+from app.bot.midlewares.has_reg import HasReg
 from app.bot.routers.user_routers.main_user_router import main_user_router
 from app.bot.routers.user_routers.registration_router import registration_router
 from app.bot.routers.user_routers.process_sub import payment_router
@@ -22,21 +23,20 @@ from app.config import settings
 from loguru import logger
 
 from app.db.dao import UserDAO
-from app.db.schemas import TelegramIDModel
+from app.db.schemas import TelegramIDModel,UserFilterModel
 from app.db.database import async_session_maker
 
 main_router = Router()
 
-payment_router.message.middleware(CheckPaidSubscription())
 stop_router.message.middleware(CheckPaidSubscription())
 main_user_router.message.middleware(CheckPaidSubscription())
-credits_router.message.middleware(CheckPaidSubscription())
 
-payment_router.message.middleware(CheckSub())
 stop_router.message.middleware(CheckSub())
 main_user_router.message.middleware(CheckSub())
-credits_router.message.middleware(CheckSub())
 balance_router.message.middleware(CheckSub())
+credits_router.message.middleware(CheckSub())
+
+main_user_router.message.middleware(HasReg())
 
 admin_router.message.middleware(CheckAdmin())
 
@@ -59,24 +59,25 @@ async def cmd_start(message: Message, state: FSMContext):
     if message.text and message.text.startswith("/start referal_comment_"):
         deal_id = message.text.split("_")[-1]
         await state.update_data(deal_id=deal_id)
-        msg = await message.answer("Введите комментарий для клиента:")
+        await message.answer("Введите комментарий для клиента:")
         await state.set_state(ReferalComment.waiting_comment)
         return
     
-    await message.answer(messages.get('start'))
+    await message.answer(messages.get('start'), reply_markup=MainKeyboard.build_main_kb(message.from_user.id))
     async with async_session_maker() as session:
         user_from_db = await UserDAO.find_one_or_none(session,TelegramIDModel(telegram_id=message.from_user.id))
         if user_from_db:
-            await message.answer(f'Привет, {user_from_db.user_enter_first_name}!', reply_markup=MainKeyboard.build_main_kb(message.from_user.id))
-            return
-        chat_member = await message.bot.get_chat_member(chat_id=settings.CHAT_TO_SUB, user_id=message.from_user.id)
-        if chat_member.status == 'left':
-            await message.answer("Пожалуйста, подпишитесь на наш канал, чтобы продолжить.", reply_markup=get_subscription_on_chanel_keyboard())
             return
         if not user_from_db:
-            await message.answer('Для использования ботом нужно пройти анкетрование. Чтобы начать - нажмите кнопку "Я готов"',reply_markup=im_ready())
-            return
-    
+            await UserDAO.add(
+                session, 
+                UserFilterModel(
+                    telegram_id=message.from_user.id,
+                    username=message.from_user.username,
+                    first_name=message.from_user.first_name,
+                    last_name=message.from_user.last_name
+                )
+            )
 
 @main_user_router.message(StateFilter(ReferalComment.waiting_comment))
 async def process_referal_comment(message: Message, state: FSMContext):
@@ -86,9 +87,9 @@ async def process_referal_comment(message: Message, state: FSMContext):
 
     success = await bitrix_add_comment_to_deal(deal_id, comment)
     if success:
-        msg = await message.answer("Комментарий отправлен в Bitrix24!")
+        await message.answer("Комментарий отправлен в Bitrix24!")
     else:
-        msg = await message.answer("Ошибка при отправке комментария в Bitrix24.")
+        await message.answer("Ошибка при отправке комментария в Bitrix24.")
     await state.clear()
 
 async def is_user_subscribed(bot: Bot, user_id: int, channel_id: str) -> bool:

@@ -30,6 +30,7 @@ class UserModel(TelegramIDModel):
 
 
 class UserFilterModel(BaseModel):
+    telegram_id: Optional[int] = None
     username: Optional[str] = None
     first_name: str = None
     last_name:Optional[str] = None

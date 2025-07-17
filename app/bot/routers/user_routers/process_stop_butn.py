@@ -1,4 +1,5 @@
-﻿from datetime import datetime, timedelta
+﻿import asyncio
+from datetime import datetime, timedelta
 from aiogram import Router,F
 from aiogram.types import CallbackQuery
 from loguru import logger
@@ -35,14 +36,34 @@ async def process_stop(query: CallbackQuery, callback_data:StopBancrData):
             fio = f"{user_from_db.user_enter_last_name} {user_from_db.user_enter_first_name}"
 
         success, result = await create_bitrix_deal(title=f'{fio}_ТГБОТ',comment=comment_msg,category_id='7',stage_id='C7:UC_CYWJJ2')
+        
         if success:
             await query.message.delete()
-            msg = await query.message.answer('Отлично, скоро с вами свяжется наш менеджер')
+            await query.message.answer('Отлично, скоро с вами свяжется наш менеджер')
+            asyncio.create_task(send_delayed_message(
+                bot=query.bot,
+                chat_id=query.from_user.id,
+                delay=300  # 5 минут
+            ))
         else:
             logger.error(f"Ошибка при создании сделки: {result}")
             await query.message.delete()
-            msg = await query.message.answer('Произошла ошибка на сервере, попробуйте позже')
+            await query.message.answer('Произошла ошибка на сервере, попробуйте позже')
 
     except Exception as e:
         logger.error(f'При отправке лида от юзера {query.from_user.id} произошла ошибка - {str(e)}')
         await query.answer('Что-то пошло не так')
+
+async def send_delayed_message(bot, chat_id: int, delay: int):
+    """
+    Отправляет сообщение с задержкой
+    :param bot: Экземпляр бота
+    :param chat_id: ID чата
+    :param delay: Задержка в секундах
+    """
+    await asyncio.sleep(delay)
+    await bot.send_message(
+        chat_id=chat_id,
+        text=messages.get('referal'),
+        reply_markup=referal_keyboard()
+    )

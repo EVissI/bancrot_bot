@@ -15,7 +15,7 @@ class CheckSub(BaseMiddleware):
         chat_member = await event.bot.get_chat_member(settings.CHAT_TO_SUB, event.from_user.id)
         if chat_member.status == 'left':
             await event.answer(
-                'Подпишись на канал, чтобы пользоваться ботом',reply_markup=get_subscription_on_chanel_keyboard()
+                'Для выполнения этого действия нам нужно ваше согласие на обработку персональных данных и подписка на канал для уведомлений',reply_markup=get_subscription_on_chanel_keyboard()
             )
         else:
             return await handler(event,data)

@@ -95,18 +95,18 @@ async def process_invoice(
         await callback.message.answer('Введите промокод, который вы хотите активировать',reply_markup=BackKeyboard.build_back_kb())
         await state.set_state(EnterPromo.promo)
 
-@payment_router.message(F.text == 'Назад', StateFilter(EnterPromo.promo))
+@payment_router.message(F.text == BackKeyboard.get_button_text(), StateFilter(EnterPromo.promo))
 async def process_back(
     message:Message, state:FSMContext
 ):
-    msg = await message.answer('Для работы бота нужно, либо оплатить подписку, либо активировать промокод',reply_markup=get_subscription_keyboard())
+    await message.answer('Для работы бота нужно, либо оплатить подписку, либо активировать промокод',reply_markup=get_subscription_keyboard())
     await state.clear()
 
 @payment_router.message(F.text, StateFilter(EnterPromo.promo))
 async def process_promo_code(
     message:Message, state:FSMContext
 ):
-    promo_code = message.text
+    promo_code = message.text.strip()
     async with async_session_maker() as session:
         promocode = await PromocodeDAO.find_one_or_none(
             session,
@@ -181,7 +181,7 @@ async def process_promo_code(
     success, result = await create_bitrix_deal(
         title=f"{fio}_ТГБОТ",
         comment=comment_msg,
-        category_id='7',  # Постбанкротство
+        category_id='7', 
         stage_id='C7:NEW'  
     )
     if not success:
@@ -189,7 +189,7 @@ async def process_promo_code(
     async with async_session_maker() as session:
         await UserDAO.update(session,filters=TelegramIDModel(telegram_id=message.from_user.id),values=UserFilterModel.model_validate(telegram_user.to_dict()))
     text = f"Промокод {promo_code} успешно активирован на {promocode.discount_days} дней!\n" + messages.get('after_sub')
-    msg = await message.reply(
+    await message.reply(
         text, reply_markup=MainKeyboard.build_main_kb(message.from_user.id)
     )
     await state.clear()

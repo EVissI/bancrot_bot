@@ -64,14 +64,13 @@ async def check_user(db_record):
     for person in js_data['result']:
         sum_to_pay = int(person['payment_available'])
         if sum_to_pay > 0:
-            msg = await bot.send_message(db_record.telegram_id,text='Обнаружено исполнительное производство! Нажмите кнопку',
+            await bot.send_message(db_record.telegram_id,text='Обнаружено исполнительное производство!',
                                 reply_markup=stop(f"{person['process_title']} от {person.get('process_date')}" if 'process_title' in person else ''))
-            msg = await bot.send_message(db_record.telegram_id,text=messages.get('referal'),reply_markup=referal_keyboard())
             break
     
     else: 
-        msg = await bot.send_message(db_record.telegram_id,text='Исполнительные производства не найдены')
-        msg = await bot.send_message(db_record.telegram_id,text=messages.get('referal'),reply_markup=referal_keyboard())
+        await bot.send_message(db_record.telegram_id,text='Исполнительные производства не найдены')
+
 
 
 async def retry_tasks_launch(last=False):
@@ -101,7 +100,7 @@ async def retry_tasks_launch(last=False):
             except Exception as e:
                 logger.error(f'Error: {e}')
                 if last:
-                    msg = await bot.send_message(
+                    await bot.send_message(
                                         telegram_id,
                                         text='База ФССП временно недоступна. Мы предоставим информацию позже.'
                                     )

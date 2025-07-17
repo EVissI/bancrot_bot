@@ -95,7 +95,7 @@ async def process_referal_title(message: Message, state: FSMContext):
 async def process_referal(message: Message, state: FSMContext):
     data = await state.get_data()
     if not is_valid_phone(message.text):
-        msg = await message.answer(
+        await message.answer(
             "Пожалуйста, введите корректный номер телефона в формате: +79991234567 или 89991234567"
         )
         return

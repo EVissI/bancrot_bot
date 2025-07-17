@@ -1,4 +1,4 @@
-﻿from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+﻿from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from aiogram.filters.callback_data import CallbackData
@@ -7,11 +7,15 @@ def get_subscription_on_chanel_keyboard() -> InlineKeyboardMarkup:
     channel_url = 'https://t.me/bankrot_guru' 
     kb = InlineKeyboardBuilder()
     kb.button(
+        text="Ознакомиться с соглашением", web_app=WebAppInfo(url="https://soglasiepd.netlify.app/")
+    )
+    kb.button(
         text="Подписаться", url=channel_url,
     )
     kb.button(
         text="Я подписался, проверь", callback_data="check_subscription"
     )
+    kb.adjust(1, 2)  
     return kb.as_markup()
 
 def im_ready() -> InlineKeyboardMarkup:
@@ -38,7 +42,10 @@ class StopBancrData(CallbackData, prefix="change_lang"):
 def stop(IE:str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(
-        text="Прекратить",callback_data=StopBancrData(IE=IE).pack(),
+        text="Узнать, как прекратить",callback_data=StopBancrData(IE=IE).pack(),
+    )
+    kb.button(
+        text='Пропустить',callback_data="skip_stop",
     )
     return kb.as_markup()
 

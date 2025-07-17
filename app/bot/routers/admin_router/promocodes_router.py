@@ -64,7 +64,7 @@ async def process_max_usage(message: Message, state: FSMContext):
 
     async with async_session_maker() as session:
         await PromocodeDAO.add(session,PromocodeModel(
-            code=code,
+            code=code.strip(),
             discount_days=discount_days,
             max_usage=max_usage,
             activate_count=0,
