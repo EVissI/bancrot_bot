@@ -3,6 +3,7 @@ from typing import Callable, Any, Dict, Awaitable
 
 from aiogram import BaseMiddleware
 from aiogram.types import Message
+from loguru import logger
 
 from app.bot.keyboards.inline_kb import get_subscription_keyboard, im_ready
 
@@ -19,8 +20,9 @@ class HasReg(BaseMiddleware):
     ) -> Any:
         async with async_session_maker() as session:
             user = await UserDAO.find_one_or_none(session,TelegramIDModel(telegram_id=event.from_user.id))
-        if not user.privacy_accepted:
-            await event.answer("Для пользования этим функционалом, вам необходимо пройти регистрацию.",reply_markup=im_ready())
-            return
-        else:
-            return await handler(event,data)
+            logger(user.privacy_accepted)
+            if not user.privacy_accepted:
+                await event.answer("Для пользования этим функционалом, вам необходимо пройти регистрацию.",reply_markup=im_ready())
+                return
+            else:
+                return await handler(event,data)
