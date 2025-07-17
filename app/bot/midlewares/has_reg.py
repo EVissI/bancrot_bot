@@ -19,6 +19,6 @@ class HasReg(BaseMiddleware):
     ) -> Any:
         async with async_session_maker() as session:
             user = await UserDAO.find_one_or_none(session,TelegramIDModel(telegram_id=event.from_user.id))
-        if not user.phone:
+        if not user.privacy_accepted:
             await event.answer("Для пользования этим функционалом, вам необходимо пройти регистрацию.",reply_markup=im_ready())
             return

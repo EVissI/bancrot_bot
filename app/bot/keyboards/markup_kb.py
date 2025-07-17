@@ -31,7 +31,7 @@ class BackKeyboard:
         kb = ReplyKeyboardBuilder()
         kb.button(text=BackKeyboard.__button_text)
         kb.adjust(1)  # Одна кнопка в строке
-        return kb.as_markup()
+        return kb.as_markup(resize_keyboard=True)
 
 
 class MainKeyboard:
