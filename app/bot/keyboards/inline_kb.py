@@ -155,3 +155,19 @@ def build_has_last_name_changed() -> InlineKeyboardMarkup:
     )
     kb.adjust(2)
     return kb.as_markup()
+
+class ConfirmCreditCallbackData(CallbackData, prefix="confirm_credit"):
+    action:str
+
+def build_confirm_credit_kb() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text="Подтвердить",
+        callback_data=ConfirmCreditCallbackData(action='confirm')
+    )
+    kb.button(
+        text="Отменить",
+        callback_data=ConfirmCreditCallbackData(action='cancel')
+    )
+    kb.adjust(1)
+    return kb.as_markup()

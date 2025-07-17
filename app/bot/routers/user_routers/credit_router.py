@@ -4,7 +4,7 @@ from aiogram.types import Message,CallbackQuery
 from loguru import logger
 
 from app.bot.common.utils import create_bitrix_deal
-from app.bot.keyboards.inline_kb import check_credit, referal_keyboard
+from app.bot.keyboards.inline_kb import ConfirmCreditCallbackData, build_confirm_credit_kb, check_credit, referal_keyboard
 from app.bot.keyboards.markup_kb import MainKeyboard
 from app.db.dao import UserDAO
 from app.db.schemas import TelegramIDModel
@@ -17,6 +17,21 @@ async def process_check_credit(message:Message):
     await message.answer('Проверить свою кредитную историю можно на сайте:',reply_markup=check_credit())
 
 @credits_router.callback_query(F.data == 'dispute_credit')
+async def process_dispute_credit_query(callback:CallbackQuery):
+    await callback.delete()
+    await callback.message.answer(
+        "Подтвердите, что вы хотите подать заявку на оспаривание кредитной истории",
+        reply_markup=build_confirm_credit_kb()
+    )
+@credits_router.callback_query(ConfirmCreditCallbackData.filter(F.action == 'cancel'))
+async def process_cancel_credit(callback:CallbackQuery):
+    await callback.message.delete()
+    await callback.message.answer(
+        "Вы отменили заявку на оспаривание кредитной истории",
+        reply_markup=MainKeyboard.build_main_kb(callback.from_user.id)
+    )    
+    
+@credits_router.callback_query(ConfirmCreditCallbackData.filter(F.action == 'confirm'))
 async def process_dispute_credit(callback:CallbackQuery):
     async with async_session_maker() as session:
         user_from_db = await UserDAO.find_one_or_none(session,TelegramIDModel(telegram_id=callback.from_user.id))
